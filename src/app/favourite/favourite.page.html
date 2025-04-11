@@ -1,0 +1,22 @@
+<app-header></app-header>
+
+<div class="container">
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>{{ 'FAVOURITES' | translate }}</ion-title>
+      </ion-toolbar>
+    </ion-header>
+  
+  <ion-content>
+    <div class="warning-banner">{{ 'FUNCTIONS.NOT_IMPLEMENTED' | translate }}</div>
+    
+    <ion-list class="ion-padding-top-bottom">
+      <ion-item *ngFor="let law of lawDataFavourites">
+        <ion-label>
+          <h2>{{ law.name }}</h2>
+          <p>{{ law.number }}</p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </ion-content>
+</div>

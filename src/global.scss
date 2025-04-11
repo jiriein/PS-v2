@@ -35,3 +35,124 @@
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import "@ionic/angular/css/palettes/dark.system.css";
+
+/* COLORS
+
+#15679c dark blue
+#d6edf7 light blue
+#105b85 btn-hoover etc
+
+*/
+
+
+/* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+  
+  header {
+    background-color: #15679c;
+    padding: 10px 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    height: 67px;
+  }
+  
+  header h1 {
+    margin: 0;
+    color: white;
+    font-size: 1.5rem;
+  }
+  
+  /* Container for Content */
+  .container {
+    padding: 10px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  ion-item {
+    --border-style: none;
+  }
+
+  body, ion-content, ion-label, ion-input, ion-button,ion-item-divider {
+    font-size: var(--app-font-size);
+    border: none;
+  }
+
+  ion-input {
+    flex: 1;
+  }
+
+  button, ion-button {
+    --background: #15679c;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  
+  button:hover, ion-button:hover {
+    --background: #105b85;
+  }
+
+
+/* Light Theme */
+
+html:not([class="ion-color-dark"]) ion-content, ion-item-divider {
+  --ion-background-color: #15669c3d;
+  --ion-item-background: #15669c3d;
+}
+
+body {
+  background-color: #d6edf7;
+  --ion-content-background-color: #15679c;
+  --ion-toolbar-background: #15669c37;
+  --ion-toolbar-color: black;
+  --ion-item-background: #15669c37;
+  --ion-text-color: black;
+  color: black;
+}
+
+
+/* Dark Theme */  
+
+body.dark-theme {
+  background-color: #15679c;
+  --ion-content-background-color: #15679c;
+  --ion-toolbar-background: #d6edf737;
+  --ion-toolbar-color: white;
+  --ion-item-background: #d6edf734;
+  --ion-text-color: white;
+  color: white;
+}
+
+html.dark-theme, ion-content.dark-theme, ion-item-divider.dark-theme {
+  --ion-background-color: #15669c3d;
+  --ion-item-background: #15669c3d;
+}
+
+
+/* Warning Banner */
+.warning-banner {
+  background-color: #ffcc00;
+  color: white;
+  padding: 30px;
+  text-align: center;
+  font-weight: bold;
+  border: 1px solid #e6ad00;
+  border-radius: 5px;
+  margin: 10px;
+}
+
+.warning-banner.dark-theme {
+  color: black;
+}

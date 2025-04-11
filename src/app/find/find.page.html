@@ -1,0 +1,35 @@
+<app-header></app-header>
+
+<div class="container">
+  <ion-header>
+    <ion-toolbar>
+      <ion-title>{{'FIND' | translate}}</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content>
+    <div class="warning-banner">{{ 'FUNCTIONS.NOT_IMPLEMENTED' | translate }}</div>
+    
+    <!-- Search Bar -->
+     <!-- 
+    <ion-item>
+      <ion-input placeholder="Enter law name or number..." [(ngModel)]="lawId"></ion-input>
+      <ion-button (click)="onSearch()">{{'FIND' | translate}}</ion-button>
+    </ion-item>
+    -->
+    <!-- Divider between search and results -->
+    <ion-item-divider></ion-item-divider>
+  
+    <!-- Search Results -->
+     <!--
+    <ion-list class="ion-padding-top-bottom">
+      <ion-item *ngFor="let law of lawData">
+        <ion-label>
+          <h2>{{ law.name }}</h2>
+          <p>{{ law.number }}</p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+    -->
+  </ion-content>
+</div>

@@ -1,0 +1,45 @@
+<app-header></app-header>
+
+<div class="container">
+  <ion-header>
+    <ion-toolbar>
+      <ion-title>{{'SETTINGS' | translate}}</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content>
+    <form>
+      
+      <!-- Theme Selection -->
+      <ion-item>
+        <ion-label>{{'THEME' | translate}}</ion-label>
+        <ion-toggle color="dark" [checked]="false" formControlName="theme" (ionChange)="onThemeChange($event)"></ion-toggle>
+      </ion-item>
+
+      <!-- Language Selection -->
+      <ion-item>
+        <ion-label>{{'LANGUAGE' | translate}}</ion-label>
+        <ion-select formControlName="language" (ionChange)="onLanguageChange($event)">
+          <ion-select-option value="cz">{{'CZECH' | translate}}</ion-select-option>
+          <ion-select-option value="en">{{'ENGLISH' | translate}}</ion-select-option>
+        </ion-select>
+      </ion-item>
+  
+      <!-- Font Size Selection -->
+      <ion-item>
+        <ion-label>{{'FONT_SIZE' | translate}}</ion-label>
+        <ion-select formControlName="fontSize" (ionChange)="onFontSizeChange($event)">
+          <ion-select-option value="small">{{'SMALL' | translate}}</ion-select-option>
+          <ion-select-option value="medium">{{'MEDIUM' | translate}}</ion-select-option>
+          <ion-select-option value="big">{{'BIG' | translate}}</ion-select-option>
+        </ion-select>
+      </ion-item>
+      
+      <!-- Custom Font Size Input -->
+      <ion-item>
+        <ion-label>{{'CUSTOM_FONT_SIZE' | translate}} (px)</ion-label>
+        <ion-input type="number" formControlName="customFontSize" placeholder="Enter size in px" slot="end"></ion-input>
+      </ion-item>
+    </form>
+  </ion-content>
+</div>

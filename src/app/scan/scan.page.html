@@ -1,0 +1,47 @@
+<app-header></app-header>
+
+<div class="container">
+  <ion-header>
+    <ion-toolbar>
+      <ion-title>{{ 'SCAN' | translate }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <div class="warning-banner">{{ 'FUNCTIONS.NOT_IMPLEMENTED' | translate }}</div>
+
+  <ion-content>
+    <!-- Camera scan section - Only available on native platforms -->
+    <div class="scan-section" *ngIf="isNative">
+      <h2>{{ 'SCAN_WITH_CAMERA' | translate }}</h2>
+      <div class="scan-buttons">
+        <ion-button expand="block" (click)="scanWithCamera()">
+          <ion-icon slot="start" name="camera-outline"></ion-icon>
+        </ion-button>
+      </div>
+    </div>
+    
+    <!-- Gallery scan section - Only available on native platforms -->
+    <div class="scan-section" *ngIf="isNative">
+      <h2>{{ 'SCAN_FROM_GALLERY' | translate }}</h2>
+      <div class="scan-buttons">
+        <ion-button expand="block" (click)="scanFromGallery()">
+          <ion-icon slot="start" name="images-outline"></ion-icon>
+        </ion-button>
+      </div>
+    </div>
+  
+    <!-- Document scan section - Available on both native and web platforms -->
+    <div class="scan-section">
+      <h2>{{ 'SCAN_FROM_DOCUMENT' | translate }}</h2>
+      <div class="scan-buttons">
+        <ion-button expand="block" (click)="scanFromDocument()">
+          <ion-icon slot="start" name="document-outline"></ion-icon>
+        </ion-button>
+      </div>
+    </div>
+
+    <!-- Web-only file input for selecting documents -->
+    <input type="file" id="webFileInput" style="display: none;" (change)="handleWebFileSelection($event)" *ngIf="!isNative"/>
+  </ion-content>
+
+</div>
