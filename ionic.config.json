@@ -1,0 +1,7 @@
+{
+  "name": "PS-v2",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
