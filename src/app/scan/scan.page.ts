@@ -12,6 +12,7 @@ import { FileTransfer, FileTransferObject } from '@awesome-cordova-plugins/file-
   selector: 'app-scan',
   templateUrl: './scan.page.html',
   styleUrls: ['./scan.page.scss'],
+  standalone: false
 })
 export class ScanPage {
   fileTransfer: FileTransferObject;
