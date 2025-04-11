@@ -1,0 +1,4 @@
+I am making a new app using ionic with angular and work in VSC.
+I created a new blank project named PS-v2 and I am using the Ngmodules.
+I did "ionic cap add android","ionic cap add ios" then "ionic build" then "ionic cap copy".
+
