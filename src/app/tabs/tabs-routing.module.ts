@@ -29,7 +29,7 @@ const routes: Routes = [
       },
       {
         path: '',
-        redirectTo: 'scan',
+        redirectTo: 'settings',
         pathMatch: 'full'
       }
     ]
