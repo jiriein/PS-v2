@@ -14,9 +14,8 @@ export class SettingsPage {
   settingsForm: FormGroup;
 
   constructor(private formBuilder: FormBuilder, private translate: TranslateService, private storage: Storage) {
-    this.storage.create();
     this.settingsForm = this.formBuilder.group({
-      theme: ['classic'],
+      theme: [false], // Boolean: true for dark, false for classic
       language: ['cz'],
       fontSize: ['medium'],
       customFontSize: [''],
@@ -30,6 +29,9 @@ export class SettingsPage {
       document.body.style.fontSize = `${value || 16}px`;
       this.storage.set('customFontSize', value);
     });
+    this.settingsForm.get('theme')?.valueChanges.subscribe((isDark) => {
+      document.body.classList.toggle('dark-theme', isDark);
+    });
   }
 
   async loadSettings() {
@@ -38,15 +40,15 @@ export class SettingsPage {
     const fontSize = await this.storage.get('fontSize') || 'medium';
     const customFontSize = await this.storage.get('customFontSize') || '';
 
-    this.settingsForm.patchValue({ theme, language, fontSize, customFontSize });
+    this.settingsForm.patchValue({ theme: theme === 'dark', language, fontSize, customFontSize });
   }
 
   // Handle Theme Change
   onThemeChange(event: any) {
-    //const theme = event.detail.value;
-    const theme = event.detail.checked ? 'dark' : 'classic';
+    const isDark = event.detail.checked;
+    const theme = isDark ? 'dark' : 'classic';
     this.storage.set('theme', theme);
-    document.body.classList.toggle('dark-theme', theme === 'dark');
+    this.settingsForm.patchValue({ theme: isDark });
   }
 
   // Handle Language Change

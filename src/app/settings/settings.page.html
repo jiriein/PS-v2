@@ -9,11 +9,11 @@
 
   <ion-content>
     <form>
-      
+ 
       <!-- Theme Selection -->
       <ion-item>
         <ion-label>{{'THEME' | translate}}</ion-label>
-        <ion-toggle color="dark" [checked]="false" formControlName="theme" (ionChange)="onThemeChange($event)"></ion-toggle>
+        <ion-toggle color="dark" formControlName="theme" (ionChange)="onThemeChange($event)"></ion-toggle>
       </ion-item>
 
       <!-- Language Selection -->
@@ -34,7 +34,7 @@
           <ion-select-option value="big">{{'BIG' | translate}}</ion-select-option>
         </ion-select>
       </ion-item>
-      
+
       <!-- Custom Font Size Input -->
       <ion-item>
         <ion-label>{{'CUSTOM_FONT_SIZE' | translate}} (px)</ion-label>
