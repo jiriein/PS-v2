@@ -1,0 +1,3 @@
+This software is not even in beta
+No warranty
+If you destroy your entire device or create an AI uprising, that's on you...
