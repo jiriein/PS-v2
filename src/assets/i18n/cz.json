@@ -27,5 +27,7 @@
     "SCAN_WITH_CAMERA": "Skenovat fotoaparátem",
     "SCAN_FROM_GALLERY": "Skenovat z galerie",
     "SCAN_FROM_DOCUMENT": "Skenovat z dokumentu",
-    "FUNCTIONS.NOT_IMPLEMENTED": "Tahle funkce v této verzi není dostupná"
+    "FUNCTIONS.NOT_IMPLEMENTED": "Tahle funkce v této verzi není dostupná",
+    "FUNCTIONS.NOT_SUPPORTED": "Tahle funkce není podporována",
+    "UNSUPPORTED_FILE_TYPE": "Tento typ souboru není podporován"
   }
