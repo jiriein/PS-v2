@@ -1,4 +1,3 @@
-
 import { Component } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import { ActionSheetController } from '@ionic/angular';
@@ -112,6 +111,7 @@ export class ScanPage {
     }).catch((error) => {
       console.error('Error downloading file:', error);
     });
+    //window.open(fileUrl, '_blank');
   }
 
   getFileExtension(fileUrl: string | undefined | null): string | null {
@@ -127,12 +127,31 @@ export class ScanPage {
   }
 
   // Handle file selection on web
-  handleWebFileSelection(event: any) {
+  async handleWebFileSelection(event: any) {
     const file = event.target.files[0];
     if (file) {
       console.log('Selected file:', file);
-      //TODO: Process the file as needed (e.g., display, upload, etc.)
+      const fileUrl = URL.createObjectURL(file);
+      const fileExtension = this.getFileExtension(file.name);
+  
+      if (!fileExtension) return;
+  
+      switch (fileExtension) {
+        case 'pdf':
+          await this.openFile(fileUrl, 'application/pdf');
+          break;
+        case 'txt':
+          await this.openFile(fileUrl, 'text/plain');
+          break;
+        case 'docx':
+          await this.openFile(fileUrl, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+          break;
+        case 'odt':
+          await this.openFile(fileUrl, 'application/vnd.oasis.opendocument.text');
+          break;
+        default:
+          console.log('Unsupported file type');
+      }
     }
   }
-
 }

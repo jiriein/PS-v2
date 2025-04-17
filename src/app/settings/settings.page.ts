@@ -15,7 +15,7 @@ export class SettingsPage {
 
   constructor(private formBuilder: FormBuilder, private translate: TranslateService, private storage: Storage) {
     this.settingsForm = this.formBuilder.group({
-      theme: [false], // Boolean: true for dark, false for classic
+      theme: [false], // Boolean: true = dark, false = classic
       language: ['cz'],
       fontSize: ['medium'],
       customFontSize: [''],
