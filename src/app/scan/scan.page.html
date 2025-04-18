@@ -7,7 +7,7 @@
     </ion-toolbar>
   </ion-header>
 
-  <div class="warning-banner">{{ 'FUNCTIONS.NOT_IMPLEMENTED' | translate }}</div>
+  <!--<div class="warning-banner">{{ 'FUNCTIONS.NOT_IMPLEMENTED' | translate }}</div>-->
 
   <ion-content>
     <!-- Camera scan section - Only available on native platforms -->
@@ -56,14 +56,15 @@
       </ion-card-content>
     </ion-card>
 
-    <!-- Button to recognize text -->
+    <!-- Button to recognize text (for images only) -->
     <div class="scan-section" *ngIf="imageUrl">
       <ion-button expand="block" (click)="recognizeText()" [disabled]="!imageUrl || isProcessing">
+        <ion-spinner name="crescent" *ngIf="isProcessing"></ion-spinner>
         {{ isProcessing ? ('SCAN.PROCESSING' | translate) : ('SCAN.RECOGNIZE_TEXT' | translate) }}
       </ion-button>
     </div>
 
-    <!-- Display and edit recognized text -->
+    <!-- Display and edit text -->
     <ion-card *ngIf="recognizedText">
       <ion-card-header>
         <ion-card-title>{{ 'SCAN.RECOGNIZED_TEXT' | translate }}</ion-card-title>
