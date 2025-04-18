@@ -27,7 +27,28 @@
     "SCAN_WITH_CAMERA": "Scan with Camera",
     "SCAN_FROM_GALLERY": "Scan from Gallery",
     "SCAN_FROM_DOCUMENT": "Scan from Document",
+    "UNSUPPORTED_FILE_TYPE": "Unsupported file type",
+    "IMAGE_CAPTURED_SUCCESSFULLY": "Image captured successfully",
+    "FAILED_TO_CAPTURE_IMAGE": "Failed to capture image",
+
     "FUNCTIONS.NOT_IMPLEMENTED": "This function is not implemented in this version",
     "FUNCTIONS.NOT_AVAILABLE": "This function is not available",
-    "UNSUPPORTED_FILE_TYPE": "Unsupported file type"
+
+    "SCAN.TITLE": "Scan",
+    "SCAN.CAPTURE_IMAGE": "Capture Image",
+    "SCAN.CAPTURED_IMAGE": "Captured Image",
+    "SCAN.RECOGNIZE_TEXT": "Recognize Text",
+    "SCAN.RECOGNIZED_TEXT": "Recognized Text",
+    "SCAN.PROCESSING": "Processing...",
+    "SCAN.EDIT_TEXT": "Edit Text",
+    "SCAN.SAVE_TEXT": "Save Text",
+    "SCAN.NO_IMAGE": "No image selected",
+    "SCAN.NO_TEXT": "No text to save",
+    "SCAN.SUCCESS_IMAGE": "Image captured successfully",
+    "SCAN.SUCCESS_SAVED": "Text saved to file",
+    "SCAN.SUCCESS_TEXT": "Text recognized successfully",
+    "SCAN.ERROR_IMAGE": "Failed to capture image",
+    "SCAN.ERROR_TEXT": "Failed to recognize text",
+    "SCAN.ERROR_SAVED": "Failed to save text to file"
+
     }

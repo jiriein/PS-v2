@@ -14,8 +14,9 @@
     <div class="scan-section" *ngIf="isNative">
       <ion-title><h2>{{ 'SCAN_WITH_CAMERA' | translate }}</h2></ion-title>
       <div class="scan-buttons">
-        <ion-button expand="block" (click)="scanWithCamera()">
+        <ion-button expand="block" (click)="scanWithCamera()" [disabled]="isProcessing">
           <ion-icon slot="start" name="camera-outline"></ion-icon>
+          {{ 'SCAN.CAPTURE_IMAGE' | translate }}
         </ion-button>
       </div>
     </div>
@@ -24,8 +25,9 @@
     <div class="scan-section" *ngIf="isNative">
       <ion-title><h2>{{ 'SCAN_FROM_GALLERY' | translate }}</h2></ion-title>
       <div class="scan-buttons">
-        <ion-button expand="block" (click)="scanFromGallery()">
+        <ion-button expand="block" (click)="scanFromGallery()" [disabled]="isProcessing">
           <ion-icon slot="start" name="images-outline"></ion-icon>
+          {{ 'SCAN.SCAN_FROM_GALLERY' | translate }}
         </ion-button>
       </div>
     </div>
@@ -34,14 +36,54 @@
     <div class="scan-section">
       <ion-title><h2>{{ 'SCAN_FROM_DOCUMENT' | translate }}</h2></ion-title>
       <div class="scan-buttons">
-        <ion-button expand="block" (click)="scanFromDocument()">
+        <ion-button expand="block" (click)="scanFromDocument()" [disabled]="isProcessing">
           <ion-icon slot="start" name="document-outline"></ion-icon>
+          {{ 'SCAN.SCAN_FROM_DOCUMENT' | translate }}
         </ion-button>
       </div>
     </div>
 
     <!-- Web-only file input for selecting documents -->
-    <input type="file" id="webFileInput" style="display: none;" (change)="handleWebFileSelection($event)" *ngIf="!isNative"/>
-  </ion-content>
+    <input type="file" id="webFileInput" style="display: none;" accept="image/*,.pdf,.txt,.docx,.odt" (change)="handleWebFileSelection($event)" *ngIf="!isNative"/>
+    
+    <!-- Display captured/selected image -->
+    <ion-card *ngIf="imageUrl">
+      <ion-card-header>
+        <ion-card-title>{{ 'SCAN.CAPTURED_IMAGE' | translate }}</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <img [src]="imageUrl" alt="Selected Image" style="max-width: 100%;" />
+      </ion-card-content>
+    </ion-card>
 
+    <!-- Button to recognize text -->
+    <div class="scan-section" *ngIf="imageUrl">
+      <ion-button expand="block" (click)="recognizeText()" [disabled]="!imageUrl || isProcessing">
+        {{ isProcessing ? ('SCAN.PROCESSING' | translate) : ('SCAN.RECOGNIZE_TEXT' | translate) }}
+      </ion-button>
+    </div>
+
+    <!-- Display and edit recognized text -->
+    <ion-card *ngIf="recognizedText">
+      <ion-card-header>
+        <ion-card-title>{{ 'SCAN.RECOGNIZED_TEXT' | translate }}</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-textarea
+          [(ngModel)]="recognizedText"
+          (ionInput)="updateText($event)"
+          auto-grow="true"
+          placeholder="{{ 'SCAN.EDIT_TEXT' | translate }}"
+        ></ion-textarea>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Button to save text to file -->
+    <div class="scan-section" *ngIf="recognizedText">
+      <ion-button expand="block" (click)="saveTextToFile()" [disabled]="!recognizedText || isProcessing">
+        {{ 'SCAN.SAVE_TEXT' | translate }}
+      </ion-button>
+    </div>
+
+  </ion-content>
 </div>

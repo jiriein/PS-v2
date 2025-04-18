@@ -27,7 +27,29 @@
     "SCAN_WITH_CAMERA": "Skenovat fotoaparátem",
     "SCAN_FROM_GALLERY": "Skenovat z galerie",
     "SCAN_FROM_DOCUMENT": "Skenovat z dokumentu",
+    "UNSUPPORTED_FILE_TYPE": "Tento typ souboru není podporován",
+    "IMAGE_CAPTURED_SUCCESSFULLY": "Scan úspěšně pořízen",
+    "FAILED_TO_CAPTURE_IMAGE": "Scan se nezdařil",
+
     "FUNCTIONS.NOT_IMPLEMENTED": "Tahle funkce v této verzi není dostupná",
     "FUNCTIONS.NOT_SUPPORTED": "Tahle funkce není podporována",
-    "UNSUPPORTED_FILE_TYPE": "Tento typ souboru není podporován"
+
+    "SCAN.TITLE": "Skenovat",
+    "SCAN-CAPTURE_IMAGE": "Skenovat fotoaparátem",
+    "SCAN.CAPTURED_IMAGE": "Sken pořízen",
+    "SCAN.RECOGNIZE_TEXT": "Rozpoznání textu",
+    "SCAN.RECOGNIZED_TEXT": "Text rozpoznán",
+    "SCAN.PROCESSING": "Zpracovávám...",
+    "SCAN.EDIT_TEXT": "Upravit text",
+    "SCAN.SAVE_TEXT": "Uložit text",
+    "SCAN.NO_IMAGE": "Sken nevybrán",
+    "SCAN.NO_TEXT": "Text nezadán",
+    "SCAN.SUCCESS_IMAGE": "Sken pořízen",
+    "SCAN.SUCCESS_SAVED": "Text uložen do souboru",
+    "SCAN.SUCCESS_TEXT": "Text rozpoznán",
+    "SCAN.ERROR_IMAGE": "Sken se nezdařil",
+    "SCAN.ERROR_TEXT": "Sken textu se nezdařil",
+    "SCAN.ERROR_SAVED": "Text se nepodařilo uložit"
+
+
   }

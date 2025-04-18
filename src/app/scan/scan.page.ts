@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import { ActionSheetController, Platform, ToastController } from '@ionic/angular';
 import { File } from '@awesome-cordova-plugins/file/ngx';
@@ -7,6 +7,8 @@ import { FileChooser } from '@awesome-cordova-plugins/file-chooser/ngx';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { FileTransfer, FileTransferObject } from '@awesome-cordova-plugins/file-transfer/ngx';
 import { TranslateService } from '@ngx-translate/core';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { createWorker, Worker } from 'tesseract.js';
 
 @Component({
   selector: 'app-scan',
@@ -14,9 +16,13 @@ import { TranslateService } from '@ngx-translate/core';
   styleUrls: ['./scan.page.scss'],
   standalone: false
 })
-export class ScanPage {
+export class ScanPage implements OnInit, OnDestroy {
   fileTransfer: FileTransferObject;
   isNative: boolean = Capacitor.getPlatform() !== 'web';
+  imageUrl: string | undefined; // Store image Data URL for display and OCR
+  recognizedText: string | undefined; // Store OCR result
+  isProcessing: boolean = false; // Track OCR processing state
+  private tesseractWorker: Worker | undefined; // Tesseract.js worker
 
   constructor(
     private fileChooser: FileChooser,
@@ -31,20 +37,42 @@ export class ScanPage {
     this.fileTransfer = this.transfer.create();
   }
 
+  async ngOnInit() {
+    try {
+      // Initialize Tesseract worker for Czech
+      this.tesseractWorker = await createWorker('ces', 1, {
+        logger: (m) => console.log(m) // Log progress
+      });
+      console.log('Tesseract worker initialized');
+    } catch (error) {
+      console.error('Failed to initialize Tesseract worker:', error);
+      await this.showWarningToast('SCAN.ERROR_TEXT');
+    }
+  }
+
+  async ngOnDestroy() {
+    // Terminate Tesseract worker to free resources
+    if (this.tesseractWorker) {
+      await this.tesseractWorker.terminate();
+    }
+  }
+
   // Native-only scan with camera
   async scanWithCamera() {
     if (!this.isNative) return;
     try {
       const image = await Camera.getPhoto({
-        quality: 90,
+        quality: 90, // Adjust the quality if too slow processing
         allowEditing: false,
-        resultType: CameraResultType.Uri,
+        resultType: CameraResultType.DataUrl, // DataUrl for Tesseract.js
         source: CameraSource.Camera
       });
-      console.log('Image captured from Camera:', image.webPath);
-      //TODO: Process the image
+      this.imageUrl = image.dataUrl;
+      console.log('Image captured from Camera:', this.imageUrl);
+      await this.showInfoToast('SCAN.SUCCESS_IMAGE');
     } catch (error) {
       console.error('Error capturing image from camera:', error);
+      await this.showWarningToast('SCAN.ERROR_IMAGE');
     }
   }
 
@@ -53,15 +81,17 @@ export class ScanPage {
     if (!this.isNative) return;
     try {
       const image = await Camera.getPhoto({
-        quality: 90,
+        quality: 90, // Adjust the quality if too slow processing
         allowEditing: false,
-        resultType: CameraResultType.Uri,
+        resultType: CameraResultType.DataUrl, // DataUrl for Tesseract.js
         source: CameraSource.Photos
       });
-      console.log('Image selected from Gallery:', image.webPath);
-      //TODO: Process the image
+      this.imageUrl = image.dataUrl;
+      console.log('Image selected from Gallery:', this.imageUrl);
+      await this.showInfoToast('SCAN.SUCCESS_IMAGE');
     } catch (error) {
       console.error('Error selecting image from gallery:', error);
+      await this.showWarningToast('SCAN.ERROR_IMAGE');
     }
   }
 
@@ -81,28 +111,47 @@ export class ScanPage {
       const fileUrl = filePath.nativeURL;
       const fileExtension = this.getFileExtension(fileUrl);
 
-      if (!fileExtension) return;
+      if (!fileExtension) {
+        await this.showWarningToast('SCAN.UNSUPPORTED_FILE_TYPE');
+        return;
+      }
 
-      switch (fileExtension) {
-        case 'pdf':
-          await this.openFile(fileUrl, 'application/pdf');
-          break;
-        case 'txt':
-          await this.openFile(fileUrl, 'text/plain');
-          break;
-        case 'docx':
-          await this.openFile(fileUrl, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-          break;
-        case 'odt':
-          await this.openFile(fileUrl, 'application/vnd.oasis.opendocument.text');
-          break;
-        default:
-          // TODO: Add support for other file types
-          await this.showWarningToast('UNSUPPORTED_FILE_TYPE');
-          console.log('Unsupported file type');
+      if (['png', 'jpg', 'jpeg'].includes(fileExtension)) {
+        // Convert file to Data URL for Tesseract.js
+        const fileEntry = filePath as any;
+        const fileData = await new Promise<string>((resolve, reject) => {
+          fileEntry.file((file: File) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(file as unknown as Blob);
+          }, reject);
+        });
+        this.imageUrl = fileData;
+        console.log('Image selected for OCR:', this.imageUrl);
+        await this.showInfoToast('SCAN.SUCCESS_IMAGE');
+      } else {
+        switch (fileExtension) {
+          case 'pdf':
+            await this.openFile(fileUrl, 'application/pdf');
+            break;
+          case 'txt':
+            await this.openFile(fileUrl, 'text/plain');
+            break;
+          case 'docx':
+            await this.openFile(fileUrl, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+            break;
+          case 'odt':
+            await this.openFile(fileUrl, 'application/vnd.oasis.opendocument.text');
+            break;
+          default:
+            await this.showWarningToast('SCAN.UNSUPPORTED_FILE_TYPE');
+            console.log('Unsupported file type');
+        }
       }
     } catch (error) {
       console.error('Error opening document:', error);
+      await this.showWarningToast('SCAN.UNSUPPORTED_FILE_TYPE');
     }
   }
 
@@ -112,8 +161,8 @@ export class ScanPage {
 
     this.fileTransfer.download(fileUrl, filePath + fileName).then((entry) => {
       this.fileOpener.open(entry.toURL(), mimeType)
-      .then(() => console.log('File is opened'))
-      .catch((error) => console.error('Error opening file:', error));
+        .then(() => console.log('File is opened'))
+        .catch((error) => console.error('Error opening file:', error));
     }).catch((error) => {
       console.error('Error downloading file:', error);
     });
@@ -133,15 +182,35 @@ export class ScanPage {
   }
 
   // Handle file selection on web
-  async handleWebFileSelection(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      console.log('Selected file:', file);
+  async handleWebFileSelection(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      await this.showWarningToast('SCAN.UNSUPPORTED_FILE_TYPE');
+      return;
+    }
+
+    console.log('Selected file:', file);
+    const fileExtension = this.getFileExtension(file.name);
+
+    if (!fileExtension) {
+      await this.showWarningToast('SCAN.UNSUPPORTED_FILE_TYPE');
+      return;
+    }
+
+    if (['png', 'jpg', 'jpeg'].includes(fileExtension)) {
+      // Convert File to Data URL for Tesseract.js
+      const fileData = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      this.imageUrl = fileData;
+      console.log('Image selected for OCR:', this.imageUrl);
+      await this.showInfoToast('SCAN.SUCCESS_IMAGE');
+    } else {
       const fileUrl = URL.createObjectURL(file);
-      const fileExtension = this.getFileExtension(file.name);
-  
-      if (!fileExtension) return;
-  
       switch (fileExtension) {
         case 'pdf':
           await this.openFile(fileUrl, 'application/pdf');
@@ -156,11 +225,74 @@ export class ScanPage {
           await this.openFile(fileUrl, 'application/vnd.oasis.opendocument.text');
           break;
         default:
-          // TODO: Add support for other file types
-          await this.showWarningToast('UNSUPPORTED_FILE_TYPE');
+          await this.showWarningToast('SCAN.UNSUPPORTED_FILE_TYPE');
           console.log('Unsupported file type');
       }
     }
+  }
+
+  // Perform OCR on the selected image
+  async recognizeText() {
+    if (!this.imageUrl) {
+      await this.showWarningToast('SCAN.NO_IMAGE');
+      return;
+    }
+    if (!this.tesseractWorker) {
+      await this.showWarningToast('SCAN.ERROR_TEXT');
+      console.error('Tesseract worker not initialized');
+      return;
+    }
+
+    this.isProcessing = true;
+    try {
+      const result = await this.tesseractWorker.recognize(this.imageUrl);
+      this.recognizedText = result.data.text; // Text with new lines and tabs preserved
+      console.log('Recognized Text:', this.recognizedText);
+      await this.showInfoToast('SCAN.SUCCESS_TEXT');
+    } catch (error) {
+      console.error('OCR Error:', error);
+      await this.showWarningToast('SCAN.ERROR_TEXT');
+    } finally {
+      this.isProcessing = false;
+    }
+  }
+
+  // Save recognized text to a file
+  async saveTextToFile() {
+    if (!this.recognizedText) {
+      await this.showWarningToast('SCAN.NO_TEXT');
+      return;
+    }
+
+    const fileName = `recognized-text-${Date.now()}.txt`;
+    try {
+      await Filesystem.writeFile({
+        path: fileName,
+        data: this.recognizedText,
+        directory: Directory.Documents,
+        encoding: Encoding.UTF8
+      });
+      console.log('Text saved to:', fileName);
+      await this.showInfoToast('SCAN.SUCCESS_SAVED');
+      
+      // Optionally open the file (native only)
+      if (this.isNative) {
+        const filePath = await Filesystem.getUri({
+          path: fileName,
+          directory: Directory.Documents
+        });
+        await this.fileOpener.open(filePath.uri, 'text/plain');
+      }
+    } catch (error) {
+      console.error('Error saving text to file:', error);
+      await this.showWarningToast('SCAN.ERROR_SAVED');
+    }
+  }
+
+  // Update recognized text (e.g., from textarea edits)
+  updateText(event: Event) {
+    const input = event.target as HTMLTextAreaElement;
+    this.recognizedText = input.value;
   }
 
   async showWarningToast(messageKey: string) {
@@ -168,8 +300,19 @@ export class ScanPage {
       message: this.translate.instant(messageKey),
       duration: 3000, // Show for 3 seconds
       position: 'middle',
-      cssClass: 'warning-toast', 
+      cssClass: 'warning-toast',
       color: 'danger'
+    });
+    await toast.present();
+  }
+
+  async showInfoToast(messageKey: string) {
+    const toast = await this.toastController.create({
+      message: this.translate.instant(messageKey),
+      duration: 2000,
+      position: 'middle',
+      cssClass: 'info-toast',
+      color: 'primary'
     });
     await toast.present();
   }
