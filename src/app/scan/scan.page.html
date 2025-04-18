@@ -12,7 +12,7 @@
   <ion-content>
     <!-- Camera scan section - Only available on native platforms -->
     <div class="scan-section" *ngIf="isNative">
-      <h2>{{ 'SCAN_WITH_CAMERA' | translate }}</h2>
+      <ion-title><h2>{{ 'SCAN_WITH_CAMERA' | translate }}</h2></ion-title>
       <div class="scan-buttons">
         <ion-button expand="block" (click)="scanWithCamera()">
           <ion-icon slot="start" name="camera-outline"></ion-icon>
@@ -22,7 +22,7 @@
     
     <!-- Gallery scan section - Only available on native platforms -->
     <div class="scan-section" *ngIf="isNative">
-      <h2>{{ 'SCAN_FROM_GALLERY' | translate }}</h2>
+      <ion-title><h2>{{ 'SCAN_FROM_GALLERY' | translate }}</h2></ion-title>
       <div class="scan-buttons">
         <ion-button expand="block" (click)="scanFromGallery()">
           <ion-icon slot="start" name="images-outline"></ion-icon>
