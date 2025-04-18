@@ -168,7 +168,7 @@ export class ScanPage {
       message: this.translate.instant(messageKey),
       duration: 3000, // Show for 3 seconds
       position: 'middle',
-      cssClass: 'warning-toast', // Custom CSS
+      cssClass: 'warning-toast', 
       color: 'danger'
     });
     await toast.present();
