@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Inject } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import { ActionSheetController, Platform, ToastController } from '@ionic/angular';
 import { File } from '@awesome-cordova-plugins/file/ngx';
@@ -32,7 +32,7 @@ export class ScanPage implements OnInit, OnDestroy {
     private platform: Platform,
     private fileOpener: FileOpener,
     private transfer: FileTransfer,
-    private file: File
+    @Inject(File) private file: File
   ) {
     this.fileTransfer = this.transfer.create();
   }

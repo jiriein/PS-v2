@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { NgModule, APP_INITIALIZER } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { RouteReuseStrategy } from '@angular/router';
 import { IonicModule, IonicRouteStrategy } from '@ionic/angular';
@@ -13,6 +13,11 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 // Factory function for TranslateLoader
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/i18n/', '.json');
+}
+
+// Factory function to initialize Storage
+export function initializeStorage(storage: Storage) {
+  return () => storage.create();
 }
 
 @NgModule({
@@ -31,11 +36,14 @@ export function HttpLoaderFactory(http: HttpClient) {
       }
     })
   ],
-  providers: [{ provide: RouteReuseStrategy, useClass: IonicRouteStrategy }, Storage],
+  providers: [{ provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
+    Storage,
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeStorage,
+      deps: [Storage],
+      multi: true
+    }],
   bootstrap: [AppComponent]
 })
-export class AppModule {
-  constructor(private storage: Storage) {
-    this.storage.create();  
-  }
-}
+export class AppModule {}

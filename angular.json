@@ -32,6 +32,10 @@
               }
             ],
             "styles": ["src/global.scss", "src/theme/variables.scss"],
+            "allowedCommonJsDependencies": [
+              "localforage",
+              "tesseract.js"
+            ],
             "scripts": []
           },
           "configurations": {

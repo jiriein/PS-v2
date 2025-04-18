@@ -24,15 +24,16 @@
     "EMAIL": "Email",
     "PASSWORD": "Password",
     "CUSTOM_FONT_SIZE": "Custom Font Size",
-    "SCAN_WITH_CAMERA": "Scan with Camera",
-    "SCAN_FROM_GALLERY": "Scan from Gallery",
-    "SCAN_FROM_DOCUMENT": "Scan from Document",
     "UNSUPPORTED_FILE_TYPE": "Unsupported file type",
     "IMAGE_CAPTURED_SUCCESSFULLY": "Image captured successfully",
     "FAILED_TO_CAPTURE_IMAGE": "Failed to capture image",
 
     "FUNCTIONS.NOT_IMPLEMENTED": "This function is not implemented in this version",
     "FUNCTIONS.NOT_AVAILABLE": "This function is not available",
+
+    "SCAN_WITH_CAMERA": "Scan with Camera",
+    "SCAN_FROM_GALLERY": "Scan from Gallery",
+    "SCAN_FROM_DOCUMENT": "Scan from Document",
 
     "SCAN.TITLE": "Scan",
     "SCAN.CAPTURE_IMAGE": "Capture Image",

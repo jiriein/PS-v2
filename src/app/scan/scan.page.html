@@ -16,7 +16,7 @@
       <div class="scan-buttons">
         <ion-button expand="block" (click)="scanWithCamera()" [disabled]="isProcessing">
           <ion-icon slot="start" name="camera-outline"></ion-icon>
-          {{ 'SCAN.CAPTURE_IMAGE' | translate }}
+          {{ 'SCAN_WITH_CAMERA' | translate }}
         </ion-button>
       </div>
     </div>
@@ -27,7 +27,7 @@
       <div class="scan-buttons">
         <ion-button expand="block" (click)="scanFromGallery()" [disabled]="isProcessing">
           <ion-icon slot="start" name="images-outline"></ion-icon>
-          {{ 'SCAN.SCAN_FROM_GALLERY' | translate }}
+          {{ 'SCAN_FROM_GALLERY' | translate }}
         </ion-button>
       </div>
     </div>
@@ -38,7 +38,7 @@
       <div class="scan-buttons">
         <ion-button expand="block" (click)="scanFromDocument()" [disabled]="isProcessing">
           <ion-icon slot="start" name="document-outline"></ion-icon>
-          {{ 'SCAN.SCAN_FROM_DOCUMENT' | translate }}
+          {{ 'SCAN_FROM_DOCUMENT' | translate }}
         </ion-button>
       </div>
     </div>

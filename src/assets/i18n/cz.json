@@ -24,9 +24,6 @@
     "EMAIL": "E-mail",
     "PASSWORD": "Heslo",
     "CUSTOM_FONT_SIZE": "Vlastní velikost fontu",
-    "SCAN_WITH_CAMERA": "Skenovat fotoaparátem",
-    "SCAN_FROM_GALLERY": "Skenovat z galerie",
-    "SCAN_FROM_DOCUMENT": "Skenovat z dokumentu",
     "UNSUPPORTED_FILE_TYPE": "Tento typ souboru není podporován",
     "IMAGE_CAPTURED_SUCCESSFULLY": "Scan úspěšně pořízen",
     "FAILED_TO_CAPTURE_IMAGE": "Scan se nezdařil",
@@ -34,8 +31,12 @@
     "FUNCTIONS.NOT_IMPLEMENTED": "Tahle funkce v této verzi není dostupná",
     "FUNCTIONS.NOT_SUPPORTED": "Tahle funkce není podporována",
 
+    "SCAN_WITH_CAMERA": "Skenovat fotoaparátem",
+    "SCAN_FROM_GALLERY": "Skenovat z galerie",
+    "SCAN_FROM_DOCUMENT": "Skenovat z dokumentu",
+
     "SCAN.TITLE": "Skenovat",
-    "SCAN-CAPTURE_IMAGE": "Skenovat fotoaparátem",
+    "SCAN.CAPTURE_IMAGE": "Skenovat fotoaparátem",
     "SCAN.CAPTURED_IMAGE": "Sken pořízen",
     "SCAN.RECOGNIZE_TEXT": "Rozpoznání textu",
     "SCAN.RECOGNIZED_TEXT": "Text rozpoznán",

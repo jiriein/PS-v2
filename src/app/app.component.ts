@@ -14,8 +14,6 @@ export class AppComponent {
   }
 
   async initializeApp() {
-    await this.storage.create();
-
     const language = (await this.storage.get('language')) || 'cz';
     this.translate.setDefaultLang('cz');
     this.translate.use(language);
