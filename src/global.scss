@@ -53,6 +53,7 @@ body {
   }
   
   header {
+    --padding-top: var(--ion-safe-area-top, 0px);
     background-color: #15679c;
     padding: 10px 20px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
