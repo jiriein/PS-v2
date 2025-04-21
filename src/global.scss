@@ -93,7 +93,7 @@ body {
 
   button, ion-button {
     --background: #15679c;
-    color: white;
+    color: #d6edf7;
     padding: 10px 20px;
     border: none;
     border-radius: 5px;
@@ -135,11 +135,11 @@ body {
 body.dark-theme {
   background-color: #15679c;
   --ion-content-background-color: #15679c;
-  --ion-toolbar-background: #d6edf737;
-  --ion-toolbar-color: white;
-  --ion-item-background: #d6edf734;
-  --ion-text-color: white;
-  color: white;
+  --ion-toolbar-background: #d6edf7b2;
+  --ion-toolbar-color: #d6edf7;
+  --ion-item-background: #d6edf7d3;
+  --ion-text-color: #d6edf7;
+  color: #d6edf7;
 }
 
 html.dark-theme, ion-content.dark-theme, ion-item-divider.dark-theme {

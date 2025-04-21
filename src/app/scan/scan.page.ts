@@ -476,7 +476,6 @@ getMimeType(extension: string): string {
       duration: 2000,
       position: 'middle',
       cssClass: 'info-toast',
-      color: 'primary'
     });
     await toast.present();
   }
