@@ -458,5 +458,4 @@ getMimeType(extension: string): string {
     });
     await toast.present();
   }
-
 }
