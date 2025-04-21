@@ -64,8 +64,8 @@ body {
   
   header h1 {
     margin: 0;
-    color: white;
-    font-size: 1.5rem;
+    color: #d6edf7;
+    font-size: 2rem;
   }
   
   /* Container for Content */
@@ -102,6 +102,12 @@ body {
   
   button:hover, ion-button:hover {
     --background: #105b85;
+  }
+
+  .logo {
+    height: 3em;
+    margin-right: 10px;
+    vertical-align: middle;
   }
 
 
