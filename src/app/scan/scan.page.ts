@@ -13,6 +13,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import * as mammoth from 'mammoth';
 import * as JSZip from 'jszip';
 
+
 @Component({
   selector: 'app-scan',
   templateUrl: './scan.page.html',
@@ -38,7 +39,15 @@ export class ScanPage implements OnInit, OnDestroy {
     @Inject(CordovaFile) private file: CordovaFile
   ) {
     this.fileTransfer = this.transfer.create();
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'assets/pdf.worker.min.js';
+    (pdfjsLib as any).GlobalWorkerOptions.workerSrc = this.getWorkerSrc();
+  }
+
+  private getWorkerSrc(): string {
+    if (Capacitor.getPlatform() === 'web') {
+      return '/assets/pdf.worker.min.mjs';
+    } else {
+      return Capacitor.convertFileSrc('public/assets/pdf.worker.min.mjs');
+    }
   }
 
   async ngOnInit() {
@@ -244,37 +253,48 @@ async readWebFileContent(file: File, extension: string): Promise<string | null> 
 
 // Extract text from PDF (native)
 async extractTextFromPDF(fileUrl: string): Promise<string> {
-  // Download file to temporary storage
-  const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
-  const filePath = this.file.tempDirectory;
-  const entry = await this.fileTransfer.download(fileUrl, filePath + fileName).then((entry) => entry);
-  const arrayBuffer = await this.file.readAsArrayBuffer(filePath, fileName);
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  let text = '';
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    text += content.items.map((item: any) => item.str).join(' ') + '\n';
+  try {
+    const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
+    const filePath = this.file.tempDirectory;
+    const entry = await this.fileTransfer.download(fileUrl, filePath + fileName).then((entry) => entry);
+    const arrayBuffer = await this.file.readAsArrayBuffer(filePath, fileName);
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let text = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map((item: any) => item.str).join(' ') + '\n';
+    }
+    return text;
+  } catch (error) {
+    console.error('Failed to extract text from PDF:', error);
+    await this.showWarningToast('SCAN.ERROR_PDF_PROCESSING');
+    return '';
   }
-  return text;
 }
 
 // Extract text from PDF (web)
 async extractTextFromPDFWeb(file: File): Promise<string> {
-  const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as ArrayBuffer);
-    reader.onerror = reject;
-    reader.readAsArrayBuffer(file);
-  });
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  let text = '';
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    text += content.items.map((item: any) => item.str).join(' ') + '\n';
+  try {
+    const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as ArrayBuffer);
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(file);
+    });
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let text = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map((item: any) => item.str).join(' ') + '\n';
+    }
+    return text;
+  } catch (error) {
+    console.error('Failed to extract text from PDF (web):', error);
+    await this.showWarningToast('SCAN.ERROR_PDF_PROCESSING');
+    return '';
   }
-  return text;
 }
 
 // Extract text from TXT (native)
@@ -350,8 +370,10 @@ getMimeType(extension: string): string {
   const mimeTypes: { [key: string]: string } = {
     pdf: 'application/pdf',
     txt: 'text/plain',
+    doc: 'application/msword',
     docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     odt: 'application/vnd.oasis.opendocument.text',
+    rtf: 'application/rtf',
   };
   return mimeTypes[extension] || 'application/octet-stream';
 }

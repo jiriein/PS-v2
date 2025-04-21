@@ -31,7 +31,7 @@
                 "output": "./svg"
               },
               {
-                "glob": "pdf.worker.min.js",
+                "glob": "pdf.worker.min.mjs",
                 "input": "node_modules/pdfjs-dist/build",
                 "output": "assets"
               }
@@ -120,7 +120,7 @@
                 "output": "./svg"
               },
               {
-                "glob": "pdf.worker.min.js",
+                "glob": "pdf.worker.min.mjs",
                 "input": "node_modules/pdfjs-dist/build",
                 "output": "assets"
               }

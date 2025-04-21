@@ -50,7 +50,8 @@
     "SCAN.SUCCESS_TEXT": "Text rozpoznán",
     "SCAN.ERROR_IMAGE": "Sken se nezdařil",
     "SCAN.ERROR_TEXT": "Sken textu se nezdařil",
-    "SCAN.ERROR_SAVED": "Text se nepodařilo uložit"
+    "SCAN.ERROR_SAVED": "Text se nepodařilo uložit",
+    "SCAN.ERROR_PDF_PROCESSING": "Skenování PDF se nezdařilo"
 
 
   }

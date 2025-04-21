@@ -46,7 +46,7 @@
     </div>
 
     <!-- Web-only file input for selecting documents -->
-    <input type="file" id="webFileInput" style="display: none;" accept="image/*,.pdf,.txt,.docx,.odt" (change)="handleWebFileSelection($event)" *ngIf="!isNative"/>
+    <input type="file" id="webFileInput" style="display: none;" accept=".doc,.docx,.odt,.txt,.rtf,.pdf,.jpg,.jpeg,.png,.webp" (change)="handleWebFileSelection($event)" *ngIf="!isNative"/>
     
     <!-- Display captured/selected image -->
     <ion-card *ngIf="imageUrl">
@@ -54,7 +54,7 @@
         <ion-card-title>{{ 'SCAN.CAPTURED_IMAGE' | translate }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
-        <img [src]="imageUrl" alt="Selected Image" style="max-width: 100%;" />
+        <img [src]="imageUrl" alt="Selected Image" style="max-width: 100%; max-height: 450px; object-fit: contain;" />
       </ion-card-content>
     </ion-card>
 
