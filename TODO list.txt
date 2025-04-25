@@ -1,0 +1,15 @@
+TODO
+
+figure if to use tesseract offline OCR too (if it runs without too much of a computing power)
+ 
+Figure how API on zakonyprolidi.cz works
+
+create a way to display Laws, their dependencies and their dates
+
+figure how to highlight law numbers in text (how to find them - i guess some regex will be great for that) and link the redirection to laws display
+
+figure how to save laws to favourites (favourites should have the option to download for offline version)
+
+figure how to save law numbers and their dates for offline version?
+
+fix colors and other cosmetic stuff
