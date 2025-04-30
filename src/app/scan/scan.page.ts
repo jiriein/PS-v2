@@ -1,17 +1,20 @@
-import { Component, OnInit, OnDestroy, Inject } from '@angular/core';
-import { Capacitor } from '@capacitor/core';
-import { ActionSheetController, Platform, ToastController } from '@ionic/angular';
-import { File as CordovaFile } from '@awesome-cordova-plugins/file/ngx';
-import { FileOpener } from '@awesome-cordova-plugins/file-opener/ngx';
-import { FileChooser } from '@awesome-cordova-plugins/file-chooser/ngx';
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { Component, OnInit, OnDestroy, Inject, ViewChild, ElementRef, AfterViewInit} from '@angular/core';
 import { FileTransfer, FileTransferObject } from '@awesome-cordova-plugins/file-transfer/ngx';
-import { TranslateService } from '@ngx-translate/core';
+import { ActionSheetController, Platform, ToastController } from '@ionic/angular';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { File as CordovaFile } from '@awesome-cordova-plugins/file/ngx';
+import { FileChooser } from '@awesome-cordova-plugins/file-chooser/ngx';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { FileOpener } from '@awesome-cordova-plugins/file-opener/ngx';
+import { Document, Packer, Paragraph, TextRun } from 'docx';
+import { TranslateService } from '@ngx-translate/core';
 import { createWorker, Worker } from 'tesseract.js';
+import { Capacitor } from '@capacitor/core';
 import * as pdfjsLib from 'pdfjs-dist';
+import { saveAs } from 'file-saver';
 import * as mammoth from 'mammoth';
 import * as JSZip from 'jszip';
+import Quill from 'quill';
 
 
 @Component({
@@ -20,11 +23,10 @@ import * as JSZip from 'jszip';
   styleUrls: ['./scan.page.scss'],
   standalone: false
 })
-export class ScanPage implements OnInit, OnDestroy {
+export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
   fileTransfer: FileTransferObject;
   isNative: boolean = Capacitor.getPlatform() !== 'web';
   imageUrl: string | undefined; // Store image Data URL for display and OCR
-  recognizedText: string | undefined; // Store OCR result
   isProcessing: boolean = false; // Track OCR processing state
   private tesseractWorker: Worker | undefined; // Tesseract.js worker
 
@@ -40,6 +42,165 @@ export class ScanPage implements OnInit, OnDestroy {
   ) {
     this.fileTransfer = this.transfer.create();
     (pdfjsLib as any).GlobalWorkerOptions.workerSrc = this.getWorkerSrc();
+  }
+
+  @ViewChild('editor', { static: false }) editorElement!: ElementRef;
+  quillEditor: Quill | undefined;
+  recognizedText: string | undefined = '';
+
+  ngAfterViewInit() {
+    this.initializeQuillEditor();
+  }
+
+  private initializeQuillEditor() {
+    if (this.editorElement) {
+      this.quillEditor = new Quill(this.editorElement.nativeElement, {
+        theme: 'snow',
+        modules: {
+          toolbar: [
+            ['bold', 'italic', 'underline'],
+            [{ 'background': [] }], // Highlighting
+            ['link'], // Hyperlink support
+            ['clean'] // Remove formatting
+          ]
+        },
+        placeholder: this.translate.instant('SCAN.EDIT_TEXT')
+      });
+
+      // Set initial text if recognizedText exists
+      if (this.recognizedText) {
+        this.quillEditor.setText(this.recognizedText);
+      }
+
+      // Update recognizedText when editor content changes
+      this.quillEditor.on('text-change', () => {
+        const content = this.quillEditor!.root.innerHTML;
+        this.recognizedText = content; // Store HTML content for saving
+      });
+    }
+  }
+
+  // Update text from editor (optional, for manual updates)
+  updateText() {
+    if (this.quillEditor) {
+      this.recognizedText = this.quillEditor.root.innerHTML;
+    }
+  }
+
+  // Save text to a file
+  async saveTextToFile() {
+    if (!this.recognizedText || this.recognizedText === '<p><br></p>') {
+      await this.showWarningToast('SCAN.NO_TEXT');
+      return;
+    }
+
+    const fileName = `recognized-text-${Date.now()}.docx`;
+
+    try {
+      // Create a new DOCX document
+      const doc = new Document({
+        sections: [
+          {
+            properties: {},
+            children: this.parseHtmlToDocx(this.recognizedText)
+          }
+        ]
+      });
+
+      // Generate the DOCX file as a blob
+      const blob = await Packer.toBlob(doc);
+
+      if (this.isNative) {
+        // Save file for native platforms (Android)
+        const base64Data = await this.blobToBase64(blob);
+        await Filesystem.writeFile({
+          path: fileName,
+          data: base64Data,
+          directory: Directory.Documents
+        });
+        console.log('DOCX saved to:', fileName);
+        await this.showInfoToast('SCAN.SUCCESS_SAVED');
+
+        // Open the file
+        const filePath = await Filesystem.getUri({
+          path: fileName,
+          directory: Directory.Documents
+        });
+        await this.fileOpener.open(filePath.uri, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+      } else {
+        // Save file for web
+        saveAs(blob, fileName);
+        console.log('DOCX downloaded:', fileName);
+        await this.showInfoToast('SCAN.SUCCESS_SAVED');
+      }
+    } catch (error) {
+      console.error('Error saving DOCX file:', error);
+      await this.showWarningToast('SCAN.ERROR_SAVED');
+    }
+  }
+  // Helper method to convert HTML to DOCX paragraphs
+  private parseHtmlToDocx(html: string): Paragraph[] {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const paragraphs: Paragraph[] = [];
+
+    // Process each paragraph (<p>) or other elements
+    const elements = doc.querySelectorAll('p, div, span');
+    elements.forEach((element) => {
+      const textRuns: TextRun[] = [];
+
+      // Process text nodes and inline formatting
+      const processNode = (node: Node) => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          textRuns.push(new TextRun({ text: node.textContent || '' }));
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          const el = node as HTMLElement;
+          const runProps: any = { text: el.textContent || '' };
+
+          // Apply basic formatting
+          if (el.tagName === 'B' || el.tagName === 'STRONG') {
+            runProps.bold = true;
+          }
+          if (el.tagName === 'I' || el.tagName === 'EM') {
+            runProps.italics = true;
+          }
+          if (el.tagName === 'U') {
+            runProps.underline = true;
+          }
+          if (el.style.backgroundColor) {
+            // Note: docx library has limited support for background color
+            console.log('Background color detected, not fully supported in DOCX');
+          }
+          if (el.tagName === 'A') {
+            runProps.text = `${el.textContent} (${el.getAttribute('href')})`; // Include link as text
+          }
+
+          textRuns.push(new TextRun(runProps));
+        }
+      };
+
+      // Recursively process child nodes
+      element.childNodes.forEach(processNode);
+
+      if (textRuns.length > 0) {
+        paragraphs.push(new Paragraph({ children: textRuns }));
+      }
+    });
+
+    return paragraphs.length > 0 ? paragraphs : [new Paragraph({ children: [new TextRun({ text: 'No content' })] })];
+  }
+
+  // Helper method to convert Blob to Base64 for native file saving
+  private blobToBase64(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        resolve(result.split(',')[1]);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   }
 
   private getWorkerSrc(): string {
@@ -404,44 +565,7 @@ getMimeType(extension: string): string {
     }
   }
 
-  // Save text to a file
-  async saveTextToFile() {
-    if (!this.recognizedText) {
-      await this.showWarningToast('SCAN.NO_TEXT');
-      return;
-    }
-
-    const fileName = `recognized-text-${Date.now()}.txt`;
-    try {
-      await Filesystem.writeFile({
-        path: fileName,
-        data: this.recognizedText,
-        directory: Directory.Documents,
-        encoding: Encoding.UTF8
-      });
-      console.log('Text saved to:', fileName);
-      await this.showInfoToast('SCAN.SUCCESS_SAVED');
-      
-      // Optionally open the file (native only)
-      if (this.isNative) {
-        const filePath = await Filesystem.getUri({
-          path: fileName,
-          directory: Directory.Documents
-        });
-        await this.fileOpener.open(filePath.uri, 'text/plain');
-      }
-    } catch (error) {
-      console.error('Error saving text to file:', error);
-      await this.showWarningToast('SCAN.ERROR_SAVED');
-    }
-  }
-
-  // Update text from textarea
-  updateText(event: Event) {
-    const input = event.target as HTMLTextAreaElement;
-    this.recognizedText = input.value;
-  }
-
+  // Open file
   async openFile(fileUrl: string, mimeType: string) {
     const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
     const filePath = Capacitor.getPlatform() === 'android' ? this.file.externalDataDirectory : this.file.documentsDirectory;
@@ -455,10 +579,12 @@ getMimeType(extension: string): string {
     });
   }
 
+  // Get file extension 
   getFileExtension(fileUrl: string | undefined | null): string | null {
     return fileUrl ? fileUrl.split('.').pop()?.toLowerCase() || null : null;
   }
 
+  // Toasts
   async showWarningToast(messageKey: string) {
     const toast = await this.toastController.create({
       message: this.translate.instant(messageKey),

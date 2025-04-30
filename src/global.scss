@@ -36,6 +36,11 @@
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import "@ionic/angular/css/palettes/dark.system.css";
 
+
+/* Quill Editor */
+@import '~quill/dist/quill.core.css';
+@import '~quill/dist/quill.snow.css';
+
 /* COLORS
 
 #15679c dark blue
@@ -111,6 +116,21 @@ body {
     vertical-align: middle;
   }
 
+  .quill-editor {
+    min-height: 200px;
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  
+    .ql-container {
+      font-size: 16px;
+    }
+  
+    .ql-toolbar {
+      border-bottom: 1px solid #ccc;
+    }
+  }
 
 /* Light Theme */
 

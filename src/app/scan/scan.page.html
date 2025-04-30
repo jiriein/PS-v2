@@ -67,17 +67,12 @@
     </div>
 
     <!-- Display and edit text -->
-    <ion-card *ngIf="recognizedText">
+    <ion-card *ngIf="recognizedText || imageUrl">
       <ion-card-header>
         <ion-card-title>{{ 'SCAN.RECOGNIZED_TEXT' | translate }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
-        <ion-textarea
-          [(ngModel)]="recognizedText"
-          (ionInput)="updateText($event)"
-          auto-grow="true"
-          placeholder="{{ 'SCAN.EDIT_TEXT' | translate }}"
-        ></ion-textarea>
+        <div #editor class="quill-editor"></div>
       </ion-card-content>
     </ion-card>
 
