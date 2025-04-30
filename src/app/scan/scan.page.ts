@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Inject, ViewChild, ElementRef, AfterViewInit} from '@angular/core';
+import { Component, OnInit, OnDestroy, Inject, ViewChild, ElementRef, AfterViewInit, ChangeDetectorRef} from '@angular/core';
 import { FileTransfer, FileTransferObject } from '@awesome-cordova-plugins/file-transfer/ngx';
 import { ActionSheetController, Platform, ToastController } from '@ionic/angular';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
@@ -29,6 +29,9 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
   imageUrl: string | undefined; // Store image Data URL for display and OCR
   isProcessing: boolean = false; // Track OCR processing state
   private tesseractWorker: Worker | undefined; // Tesseract.js worker
+  @ViewChild('editor', { static: false }) editorElement!: ElementRef;
+  quillEditor: Quill | undefined;
+  recognizedText: string | undefined = '';
 
   constructor(
     private fileChooser: FileChooser,
@@ -38,22 +41,23 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     private platform: Platform,
     private fileOpener: FileOpener,
     private transfer: FileTransfer,
-    @Inject(CordovaFile) private file: CordovaFile
+    @Inject(CordovaFile) private file: CordovaFile,
+    private cdr: ChangeDetectorRef
   ) {
     this.fileTransfer = this.transfer.create();
     (pdfjsLib as any).GlobalWorkerOptions.workerSrc = this.getWorkerSrc();
   }
 
-  @ViewChild('editor', { static: false }) editorElement!: ElementRef;
-  quillEditor: Quill | undefined;
-  recognizedText: string | undefined = '';
+  
 
   ngAfterViewInit() {
+    console.log('ngAfterViewInit - Editor element:', this.editorElement);
     this.initializeQuillEditor();
+    this.cdr.detectChanges();
   }
 
   private initializeQuillEditor() {
-    if (this.editorElement) {
+    if (this.editorElement && this.editorElement.nativeElement) {
       this.quillEditor = new Quill(this.editorElement.nativeElement, {
         theme: 'snow',
         modules: {
@@ -68,7 +72,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       });
 
       // Set initial text if recognizedText exists
-      if (this.recognizedText) {
+      if (this.recognizedText && this.recognizedText !== '<p><br></p>') {
         this.quillEditor.setText(this.recognizedText);
       }
 
@@ -77,6 +81,9 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
         const content = this.quillEditor!.root.innerHTML;
         this.recognizedText = content; // Store HTML content for saving
       });
+      console.log('Quill editor initialized:', this.quillEditor);
+    } else {
+      console.error('Editor element not found');
     }
   }
 
@@ -85,6 +92,22 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     if (this.quillEditor) {
       this.recognizedText = this.quillEditor.root.innerHTML;
     }
+  }
+
+  private updateEditorText(text: string) {
+    this.recognizedText = text;
+    if (this.quillEditor && text) {
+      this.quillEditor.setText(text);
+      this.recognizedText = this.quillEditor.root.innerHTML; // Update to HTML format
+    } else if (!this.quillEditor && this.editorElement && this.editorElement.nativeElement) {
+      // Reinitialize editor if it hasn't been set up
+      this.initializeQuillEditor();
+      if (this.quillEditor && text) {
+        (this.quillEditor as Quill).setText(text);
+        this.recognizedText = (this.quillEditor as Quill).root.innerHTML;
+      }
+    }
+    this.cdr.detectChanges(); // Trigger change detection
   }
 
   // Save text to a file
@@ -308,7 +331,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
         // Handle text-based files
         const fileContent = await this.readFileContent(fileUrl, fileExtension);
         if (fileContent) {
-          this.recognizedText = fileContent;
+          this.updateEditorText(fileContent);
           console.log('Text extracted:', this.recognizedText);
           await this.showInfoToast('SCAN.SUCCESS_TEXT');
         } else {
@@ -358,7 +381,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       // Handle text-based files
       const fileContent = await this.readWebFileContent(file, fileExtension);
       if (fileContent) {
-        this.recognizedText = fileContent;
+        this.updateEditorText(fileContent);
         console.log('Text extracted:', this.recognizedText);
         await this.showInfoToast('SCAN.SUCCESS_TEXT');
       } else {
@@ -554,9 +577,14 @@ getMimeType(extension: string): string {
     this.isProcessing = true;
     try {
       const result = await this.tesseractWorker.recognize(this.imageUrl);
-      this.recognizedText = result.data.text; // Text with new lines and tabs preserved
+      this.updateEditorText(result.data.text);
       console.log('Recognized Text:', this.recognizedText);
       await this.showInfoToast('SCAN.SUCCESS_TEXT');
+      // Explicitly set text in Quill editor
+      if (this.quillEditor && this.recognizedText) {
+        this.quillEditor.setText(this.recognizedText);
+        this.recognizedText = this.quillEditor.root.innerHTML;
+      }
     } catch (error) {
       console.error('OCR Error:', error);
       await this.showWarningToast('SCAN.ERROR_TEXT');

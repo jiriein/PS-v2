@@ -67,13 +67,11 @@
     </div>
 
     <!-- Display and edit text -->
-    <ion-card *ngIf="recognizedText || imageUrl">
+    <ion-card [hidden]="!recognizedText && !imageUrl">
       <ion-card-header>
         <ion-card-title>{{ 'SCAN.RECOGNIZED_TEXT' | translate }}</ion-card-title>
       </ion-card-header>
-      <ion-card-content>
-        <div #editor class="quill-editor"></div>
-      </ion-card-content>
+      <ion-card-content><div #editor class="quill-editor"></div></ion-card-content>
     </ion-card>
 
     <!-- Button to save text to file -->
