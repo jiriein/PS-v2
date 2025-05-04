@@ -48,7 +48,6 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     (pdfjsLib as any).GlobalWorkerOptions.workerSrc = this.getWorkerSrc();
   }
 
-  
 
   ngAfterViewInit() {
     console.log('ngAfterViewInit - Editor element:', this.editorElement);
@@ -64,7 +63,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
           toolbar: [
             ['bold', 'italic', 'underline'],
             [{ 'background': [] }], // Highlighting
-            ['link'], // Hyperlink support
+            ['link'], // Hyperlink
             ['clean'] // Remove formatting
           ]
         },
@@ -72,18 +71,42 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       });
 
       // Set initial text if recognizedText exists
-      if (this.recognizedText && this.recognizedText !== '<p><br></p>') {
-        this.quillEditor.setText(this.recognizedText);
+      if (this.recognizedText) {
+        this.setEditorContent(this.recognizedText);
       }
 
       // Update recognizedText when editor content changes
       this.quillEditor.on('text-change', () => {
-        const content = this.quillEditor!.root.innerHTML;
-        this.recognizedText = content; // Store HTML content for saving
+        // Update recognizedText as plain text
+        const delta = (this.quillEditor as Quill).getContents();
+        this.recognizedText = delta.ops
+          .filter(op => typeof op.insert === 'string')
+          .map(op => op.insert)
+          .join('')
+          .trim();
       });
       console.log('Quill editor initialized:', this.quillEditor);
     } else {
       console.error('Editor element not found');
+    }
+  }
+
+  // Helper method to set editor content, handling plain text or HTML
+  private setEditorContent(text: string) {
+    if (!this.quillEditor) return;
+
+    // Check if the text is HTML by looking for common tags
+    const isHtml = /<[a-z][\s\S]*>/i.test(text);
+    if (isHtml) {
+      // If HTML, use pasteHTML to render it correctly
+      (this.quillEditor as Quill).clipboard.dangerouslyPasteHTML(text);
+    } else {
+      // If plain text, convert to Delta format with line breaks
+      const lines = text.split('\n').filter(line => line.trim());
+      const delta = lines.map(line => ({
+        insert: line + '\n'
+      }));
+      (this.quillEditor as Quill).setContents(delta);
     }
   }
 
@@ -95,24 +118,22 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private updateEditorText(text: string) {
+    console.log('updateEditorText input:', text); //Debug log
     this.recognizedText = text;
     if (this.quillEditor && text) {
-      this.quillEditor.setText(text);
-      this.recognizedText = this.quillEditor.root.innerHTML; // Update to HTML format
+      this.setEditorContent(text);
     } else if (!this.quillEditor && this.editorElement && this.editorElement.nativeElement) {
-      // Reinitialize editor if it hasn't been set up
       this.initializeQuillEditor();
       if (this.quillEditor && text) {
-        (this.quillEditor as Quill).setText(text);
-        this.recognizedText = (this.quillEditor as Quill).root.innerHTML;
+        this.setEditorContent(text);
       }
     }
-    this.cdr.detectChanges(); // Trigger change detection
+    this.cdr.detectChanges();
   }
 
   // Save text to a file
   async saveTextToFile() {
-    if (!this.recognizedText || this.recognizedText === '<p><br></p>') {
+    if (!this.recognizedText) {
       await this.showWarningToast('SCAN.NO_TEXT');
       return;
     }
@@ -125,7 +146,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
         sections: [
           {
             properties: {},
-            children: this.parseHtmlToDocx(this.recognizedText)
+            children: this.parseHtmlToDocx((this.quillEditor as Quill).root.innerHTML)
           }
         ]
       });
@@ -161,6 +182,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       await this.showWarningToast('SCAN.ERROR_SAVED');
     }
   }
+
   // Helper method to convert HTML to DOCX paragraphs
   private parseHtmlToDocx(html: string): Paragraph[] {
     const parser = new DOMParser();
@@ -175,8 +197,11 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       // Process text nodes and inline formatting
       const processNode = (node: Node) => {
         if (node.nodeType === Node.TEXT_NODE) {
-          textRuns.push(new TextRun({ text: node.textContent || '' }));
-        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          const text = node.textContent || '';
+          if (text.trim()) {
+            textRuns.push(new TextRun({ text }));
+          }
+        }else if (node.nodeType === Node.ELEMENT_NODE) {
           const el = node as HTMLElement;
           const runProps: any = { text: el.textContent || '' };
 
@@ -198,7 +223,9 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
             runProps.text = `${el.textContent} (${el.getAttribute('href')})`; // Include link as text
           }
 
-          textRuns.push(new TextRun(runProps));
+          if (runProps.text.trim()) {
+            textRuns.push(new TextRun(runProps));
+          }
         }
       };
 
@@ -580,11 +607,6 @@ getMimeType(extension: string): string {
       this.updateEditorText(result.data.text);
       console.log('Recognized Text:', this.recognizedText);
       await this.showInfoToast('SCAN.SUCCESS_TEXT');
-      // Explicitly set text in Quill editor
-      if (this.quillEditor && this.recognizedText) {
-        this.quillEditor.setText(this.recognizedText);
-        this.recognizedText = this.quillEditor.root.innerHTML;
-      }
     } catch (error) {
       console.error('OCR Error:', error);
       await this.showWarningToast('SCAN.ERROR_TEXT');
