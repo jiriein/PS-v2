@@ -4,7 +4,7 @@ import { ActionSheetController, Platform, ToastController } from '@ionic/angular
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { File as CordovaFile } from '@awesome-cordova-plugins/file/ngx';
 import { FileChooser } from '@awesome-cordova-plugins/file-chooser/ngx';
-import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { Filesystem, Directory} from '@capacitor/filesystem';
 import { FileOpener } from '@awesome-cordova-plugins/file-opener/ngx';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { TranslateService } from '@ngx-translate/core';
@@ -50,7 +50,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
 
 
   ngAfterViewInit() {
-    console.log('ngAfterViewInit - Editor element:', this.editorElement);
+    console.log('ngAfterViewInit - Editor element:', this.editorElement); //Debug log
     this.initializeQuillEditor();
     this.cdr.detectChanges();
   }
@@ -85,7 +85,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
           .join('')
           .trim();
       });
-      console.log('Quill editor initialized:', this.quillEditor);
+      console.log('Quill editor initialized:', this.quillEditor); //Debug log
     } else {
       console.error('Editor element not found');
     }
@@ -102,10 +102,11 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       (this.quillEditor as Quill).clipboard.dangerouslyPasteHTML(text);
     } else {
       // If plain text, convert to Delta format with line breaks
-      const lines = text.split('\n').filter(line => line.trim());
+      const lines = text.split(/\r?\n/).filter(line => line.trim());
       const delta = lines.map(line => ({
         insert: line + '\n'
       }));
+      console.log('setEditorContent delta:', delta); //Debug log
       (this.quillEditor as Quill).setContents(delta);
     }
   }
@@ -162,7 +163,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
           data: base64Data,
           directory: Directory.Documents
         });
-        console.log('DOCX saved to:', fileName);
+        console.log('DOCX saved to:', fileName); //Debug log
         await this.showInfoToast('SCAN.SUCCESS_SAVED');
 
         // Open the file
@@ -174,7 +175,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       } else {
         // Save file for web
         saveAs(blob, fileName);
-        console.log('DOCX downloaded:', fileName);
+        console.log('DOCX downloaded:', fileName); //Debug log
         await this.showInfoToast('SCAN.SUCCESS_SAVED');
       }
     } catch (error) {
@@ -217,7 +218,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
           }
           if (el.style.backgroundColor) {
             // Note: docx library has limited support for background color
-            console.log('Background color detected, not fully supported in DOCX');
+            console.log('Background color detected, not fully supported in DOCX'); //Debug log
           }
           if (el.tagName === 'A') {
             runProps.text = `${el.textContent} (${el.getAttribute('href')})`; // Include link as text
@@ -267,7 +268,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       this.tesseractWorker = await createWorker('ces', 1, {
         logger: (m) => console.log(m) // Log progress
       });
-      console.log('Tesseract worker initialized');
+      console.log('Tesseract worker initialized'); //Debug log
     } catch (error) {
       console.error('Failed to initialize Tesseract worker:', error);
       await this.showWarningToast('SCAN.ERROR_TEXT');
@@ -292,7 +293,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
         source: CameraSource.Camera
       });
       this.imageUrl = image.dataUrl;
-      console.log('Image captured from Camera:', this.imageUrl);
+      console.log('Image captured from Camera:', this.imageUrl); //Debug log
       await this.showInfoToast('SCAN.SUCCESS_IMAGE');
     } catch (error) {
       console.error('Error capturing image from camera:', error);
@@ -311,7 +312,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
         source: CameraSource.Photos
       });
       this.imageUrl = image.dataUrl;
-      console.log('Image selected from Gallery:', this.imageUrl);
+      console.log('Image selected from Gallery:', this.imageUrl); //Debug log
       await this.showInfoToast('SCAN.SUCCESS_IMAGE');
     } catch (error) {
       console.error('Error selecting image from gallery:', error);
@@ -339,7 +340,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
         await this.showWarningToast('SCAN.UNSUPPORTED_FILE_TYPE');
         return;
       }
-
+      console.log('Selected file extension:', fileExtension); //Debug log
       if (['png', 'jpg', 'jpeg'].includes(fileExtension)) {
         // Convert file to Data URL for Tesseract.js
         const fileEntry = filePath as any;
@@ -352,14 +353,14 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
           }, reject);
         });
         this.imageUrl = fileData;
-        console.log('Image selected for OCR:', this.imageUrl);
+        console.log('Image selected for OCR:', this.imageUrl); //Debug log
         await this.showInfoToast('SCAN.SUCCESS_IMAGE');
       } else {
         // Handle text-based files
         const fileContent = await this.readFileContent(fileUrl, fileExtension);
         if (fileContent) {
           this.updateEditorText(fileContent);
-          console.log('Text extracted:', this.recognizedText);
+          console.log('Text extracted:', this.recognizedText); //Debug log
           await this.showInfoToast('SCAN.SUCCESS_TEXT');
         } else {
           await this.openFile(fileUrl, this.getMimeType(fileExtension));
@@ -387,7 +388,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       await this.showWarningToast('SCAN.UNSUPPORTED_FILE_TYPE');
       return;
     }
-    console.log('Selected file:', file);
+    console.log('Selected file:', file); //Debug log
     const fileExtension = this.getFileExtension(file.name);
     if (!fileExtension) {
       await this.showWarningToast('SCAN.UNSUPPORTED_FILE_TYPE');
@@ -402,18 +403,19 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
         reader.readAsDataURL(file);
       });
       this.imageUrl = fileData;
-      console.log('Image selected for OCR:', this.imageUrl);
+      console.log('Image selected for OCR:', this.imageUrl); //Debug log
       await this.showInfoToast('SCAN.SUCCESS_IMAGE');
     } else {
       // Handle text-based files
       const fileContent = await this.readWebFileContent(file, fileExtension);
       if (fileContent) {
         this.updateEditorText(fileContent);
-        console.log('Text extracted:', this.recognizedText);
+        console.log('Text extracted:', this.recognizedText); //Debug log
         await this.showInfoToast('SCAN.SUCCESS_TEXT');
       } else {
         const fileUrl = URL.createObjectURL(file);
         await this.openFile(fileUrl, this.getMimeType(fileExtension));
+        await this.showWarningToast('SCAN.UNSUPPORTED_FILE_TYPE');
       }
     }
   }
@@ -421,6 +423,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
 // Read file content (native)
 async readFileContent(fileUrl: string, extension: string): Promise<string | null> {
   try {
+    console.log('Reading file content for extension:', extension);  //Debug log
     switch (extension) {
       case 'pdf':
         return await this.extractTextFromPDF(fileUrl);
@@ -431,6 +434,7 @@ async readFileContent(fileUrl: string, extension: string): Promise<string | null
       case 'odt':
         return await this.extractTextFromODT(fileUrl);
       default:
+        console.log('Unsupported file extension:', extension);  //Debug log
         return null;
     }
   } catch (error) {
@@ -453,6 +457,7 @@ async readWebFileContent(file: File, extension: string): Promise<string | null> 
       case 'odt':
         return await this.extractTextFromODTWeb(file);
       default:
+        console.log('Unsupported file extension:', extension);  //Debug log
         return null;
     }
   } catch (error) {
@@ -605,7 +610,7 @@ getMimeType(extension: string): string {
     try {
       const result = await this.tesseractWorker.recognize(this.imageUrl);
       this.updateEditorText(result.data.text);
-      console.log('Recognized Text:', this.recognizedText);
+      console.log('Recognized Text:', this.recognizedText); //Debug log
       await this.showInfoToast('SCAN.SUCCESS_TEXT');
     } catch (error) {
       console.error('OCR Error:', error);
@@ -622,7 +627,7 @@ getMimeType(extension: string): string {
 
     this.fileTransfer.download(fileUrl, filePath + fileName).then((entry) => {
       this.fileOpener.open(entry.toURL(), mimeType)
-        .then(() => console.log('File is opened'))
+        .then(() => console.log('File is opened')) //Debug log
         .catch((error) => console.error('Error opening file:', error));
     }).catch((error) => {
       console.error('Error downloading file:', error);

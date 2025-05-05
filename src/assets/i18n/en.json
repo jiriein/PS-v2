@@ -1,5 +1,6 @@
 {
     "_JUST_INSERT_THE_DICTIONARY_KEY_BETWEEN_APOSTROPHES": "{{ '' | translate }}",
+
     "LEGAL_SCANER": "Legal Scanner",
     "LANGUAGE": "Language",
     "ENGLISH": "English",
@@ -51,6 +52,7 @@
     "SCAN.ERROR_IMAGE": "Failed to capture image",
     "SCAN.ERROR_TEXT": "Failed to recognize text",
     "SCAN.ERROR_SAVED": "Failed to save text to file",
-    "SCAN.ERROR_PDF_PROCESSING": "Failed to process PDF file"
+    "SCAN.ERROR_PDF_PROCESSING": "Failed to process PDF file",
+    "SCAN.DOC_NOT_SUPPORTED_WEB": "DOC files are not supported in the browser. Please use a mobile device or convert to DOCX."
 
     }

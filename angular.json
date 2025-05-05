@@ -39,7 +39,14 @@
             "styles": ["src/global.scss", "src/theme/variables.scss"],
             "allowedCommonJsDependencies": [
               "localforage",
-              "tesseract.js"
+              "tesseract.js",
+              "word-extractor",
+              "quill",
+              "buffer",
+              "file-saver",
+              "jszip",
+              "mammoth",
+              "quill-delta"
             ],
             "scripts": []
           },
