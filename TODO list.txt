@@ -13,3 +13,6 @@ figure how to save laws to favourites (favourites should have the option to down
 figure how to save law numbers and their dates for offline version?
 
 fix colors and other cosmetic stuff
+
+
+doc files dont work? (I tried to fix it but it broke the whole poject, so I returned to previous working version)

@@ -4,11 +4,7 @@ import { ActionSheetController, Platform, ToastController } from '@ionic/angular
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { File as CordovaFile } from '@awesome-cordova-plugins/file/ngx';
 import { FileChooser } from '@awesome-cordova-plugins/file-chooser/ngx';
-<<<<<<< HEAD
 import { Filesystem, Directory} from '@capacitor/filesystem';
-=======
-import { Filesystem, Directory } from '@capacitor/filesystem';
->>>>>>> 07b01606ecb8c5ee919673d3c138158ac3d6b635
 import { FileOpener } from '@awesome-cordova-plugins/file-opener/ngx';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { TranslateService } from '@ngx-translate/core';
