@@ -4,11 +4,16 @@ import { ActionSheetController, Platform, ToastController } from '@ionic/angular
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { File as CordovaFile } from '@awesome-cordova-plugins/file/ngx';
 import { FileChooser } from '@awesome-cordova-plugins/file-chooser/ngx';
+<<<<<<< HEAD
 import { Filesystem, Directory} from '@capacitor/filesystem';
+=======
+import { Filesystem, Directory } from '@capacitor/filesystem';
+>>>>>>> 07b01606ecb8c5ee919673d3c138158ac3d6b635
 import { FileOpener } from '@awesome-cordova-plugins/file-opener/ngx';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { TranslateService } from '@ngx-translate/core';
 import { createWorker, Worker } from 'tesseract.js';
+import * as WordExtractor from 'word-extractor';
 import { Capacitor } from '@capacitor/core';
 import * as pdfjsLib from 'pdfjs-dist';
 import { saveAs } from 'file-saver';
@@ -431,6 +436,8 @@ async readFileContent(fileUrl: string, extension: string): Promise<string | null
         return await this.extractTextFromTXT(fileUrl);
       case 'docx':
         return await this.extractTextFromDOCX(fileUrl);
+      case 'doc':
+        return await this.extractTextFromDOC(fileUrl);
       case 'odt':
         return await this.extractTextFromODT(fileUrl);
       default:
@@ -454,6 +461,8 @@ async readWebFileContent(file: File, extension: string): Promise<string | null> 
         return await this.extractTextFromTXTWeb(file);
       case 'docx':
         return await this.extractTextFromDOCXWeb(file);
+      case 'doc':
+        return await this.extractTextFromDOCWeb(file);
       case 'odt':
         return await this.extractTextFromODTWeb(file);
       default:
@@ -550,6 +559,44 @@ async extractTextFromDOCXWeb(file: File): Promise<string> {
   });
   const result = await mammoth.extractRawText({ arrayBuffer });
   return result.value;
+}
+
+// Extract text from DOC (native)
+async extractTextFromDOC(fileUrl: string): Promise<string | null> {
+  try {
+    const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
+    const filePath = this.file.tempDirectory;
+    const entry = await this.fileTransfer.download(fileUrl, filePath + fileName).then((entry) => entry);
+    const arrayBuffer = await this.file.readAsArrayBuffer(filePath, fileName);
+    const extractor = new WordExtractor();
+    const doc = await extractor.extract(Buffer.from(arrayBuffer));
+    const text = doc.getBody();
+    console.log('Extracted .doc text:', text);
+    return text;
+  } catch (error) {
+    console.error('Failed to extract text from .doc:', error);
+    return null;
+  }
+}
+
+// Extract text from DOC (web)
+async extractTextFromDOCWeb(file: File): Promise<string | null> {
+  try {
+    const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as ArrayBuffer);
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(file);
+    });
+    const extractor = new WordExtractor();
+    const doc = await extractor.extract(Buffer.from(arrayBuffer));
+    const text = doc.getBody();
+    console.log('Extracted .doc text:', text);
+    return text;
+  } catch (error) {
+    console.error('Failed to extract text from .doc (web):', error);
+    return null;
+  }
 }
 
 // Extract text from ODT (native) - Basic implementation
