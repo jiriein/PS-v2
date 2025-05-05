@@ -11,8 +11,11 @@
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:browser",
+          "builder": "@angular-builders/custom-webpack:browser",
           "options": {
+            "customWebpackConfig": {
+              "path": "./webpack.config.js"
+            },
             "outputPath": "www",
             "index": "src/index.html",
             "main": "src/main.ts",
@@ -39,7 +42,14 @@
             "styles": ["src/global.scss", "src/theme/variables.scss"],
             "allowedCommonJsDependencies": [
               "localforage",
-              "tesseract.js"
+              "tesseract.js",
+              "word-extractor",
+              "quill",
+              "buffer",
+              "file-saver",
+              "jszip",
+              "mammoth",
+              "quill-delta"
             ],
             "scripts": []
           },
@@ -80,7 +90,7 @@
           "defaultConfiguration": "production"
         },
         "serve": {
-          "builder": "@angular-devkit/build-angular:dev-server",
+          "builder": "@angular-builders/custom-webpack:dev-server",
           "configurations": {
             "production": {
               "buildTarget": "app:build:production"

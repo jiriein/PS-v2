@@ -1,5 +1,6 @@
 {
     "_JUST_INSERT_THE_DICTIONARY_KEY_BETWEEN_APOSTROPHES": "{{ '' | translate }}",
+
     "LEGAL_SCANER": "Právní skener", 
     "LANGUAGE": "Jazyk",
     "ENGLISH": "Anglický",
@@ -51,7 +52,7 @@
     "SCAN.ERROR_IMAGE": "Sken se nezdařil",
     "SCAN.ERROR_TEXT": "Sken textu se nezdařil",
     "SCAN.ERROR_SAVED": "Text se nepodařilo uložit",
-    "SCAN.ERROR_PDF_PROCESSING": "Skenování PDF se nezdařilo"
-
+    "SCAN.ERROR_PDF_PROCESSING": "Skenování PDF se nezdařilo",
+    "SCAN.DOC_NOT_SUPPORTED_WEB": "Soubory DOC nejsou v prohlížeči podporovány. Použijte mobilní zařízení nebo převeďte na DOCX."
 
   }
