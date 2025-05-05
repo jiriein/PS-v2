@@ -16,7 +16,6 @@ import * as mammoth from 'mammoth';
 import * as JSZip from 'jszip';
 import Quill from 'quill';
 
-
 @Component({
   selector: 'app-scan',
   templateUrl: './scan.page.html',
