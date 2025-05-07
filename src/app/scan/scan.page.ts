@@ -657,7 +657,25 @@ getMimeType(extension: string): string {
       await this.showWarningToast('SCAN.NO_PATTERNS_FOUND');
     } else {
       await this.showInfoToast('SCAN.PATTERNS_FOUND');
+      this.highlightMatches();
     }
+  }
+
+  highlightMatches() {
+    if (!this.quillEditor || !this.matches.length) {
+      console.warn('Cannot highlight: Quill editor or matches not available');
+      return;
+    }
+  
+    // Clear existing formats to avoid overlapping highlights
+    this.quillEditor.formatText(0, this.recognizedText?.length || 0, { background: false });
+  
+    // Apply background to each match
+    this.matches.forEach(match => {
+      this.quillEditor!.formatText(match.start, match.end - match.start, {
+        background: 'gray',
+      });
+    });
   }
 
   // Toasts
