@@ -14,15 +14,15 @@ export class RegulationPatternService {
   // Find all regulation patterns in the input text
   findMatches(text: string): RegulationMatch[] {
     const matches: RegulationMatch[] = [];
-    const regex = /(?:n\.?\s*[vy]\.?|n\.?\s*[vy](?:lády|lady)|nařízení\s*[vy](?:lády|lady)|narizeni\s*[vy](?:lady|lady)|n\.?\s*[vy]lady|n\.?\s*[vy]lády|nařízení[vy]lády|narizeni[vy]lady|z\.?|zak|zák|zakon|zákon|v\.?|vyhl|vyhlaska|vyhláška|vyhlaška|vyhláska|vahlaska|vahláska|vahláška|vahlaška|y\.?|yylaska|yyhláška|yyhlaška|yyhláska|yahlaska|yahláska|yahláškhl|yyha|yahlaška)\s*(?:číslo|cislo|čislo|císlo|č\.?|c\.?)\s*(\d{2,4}\/\d{2,4})\s*(?:sb\.?|SB\.?)?\b/gi;
-
+    const regex = /(?:n\.?\s*[vy]\.?|n\.?\s*[vy](?:lády|lady)|nařízení\s*[vy](?:lády|lady)|narizeni\s*[vy](?:lady|lady)|n\.?\s*[vy]lady|n\.?\s*[vy]lády|nařízení[vy]lády|narizeni[vy]lady|Nař\.?\s*vl\.?|z\.?|zak|zák|zakon|zákon|v\.?|vyhl|vyhlaska|vyhláška|vyhlaška|vyhláska|vahlaska|vahláska|vahláška|vahlaška|y\.?|yyhl|yyhlaska|yyhláška|yyhlaška|yyhláska|yahlaska|yahláska|yahláška|yahlaška|Vyhl\.?|Zák\.?)\s*(?:číslo|cislo|čislo|císlo|č\.?|c\.?|,\s*č\.?)\s*(\d{2,4}\/\d{2,4})\s*(?:sb\.?|SB\.?|Sb|SB)?\b/gi;
+    
     let match: RegExpExecArray | null;
     while ((match = regex.exec(text)) !== null) {
       // Determine the prefix for standardization
       let prefix = 'n.v.'; // Narizeni vlady
-      if (match[0].match(/^(z\.?|zak|zák|zakon|zákon)/i)) {
+      if (match[0].match(/^(z\.?|zak|zák|zakon|zákon|Zák\.?)/i)) {
         prefix = 'z.'; // Zakon
-      } else if (match[0].match(/^(v\.?|vyhl|vyhlaska|vyhláška|vyhlaška|vyhláska|vahlaska|vahláska|vahláška|vahlaška|y\.?|yyhl|yyhlaska|yyhláška|yyhlaška|yyhláska|yahlaska|yahláska|yahláška|yahlaška)/i)) {
+      } else if (match[0].match(/^(v\.?|vyhl|vyhlaska|vyhláška|vyhlaška|vyhláska|vahlaska|vahláska|vahláška|vahlaška|y\.?|yyhl|yyhlaska|yyhláška|yyhlaška|yyhláska|yahlaska|yahláska|yahláška|yahlaška|Vyhl\.?)/i)) {
         prefix = 'v.'; // Vyhlaska
       }
 
