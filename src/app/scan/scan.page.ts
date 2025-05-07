@@ -178,7 +178,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
         await this.showInfoToast('SCAN.SUCCESS_SAVED');
       }
     } catch (error) {
-      console.error('Error saving DOCX file:', error);
+      console.error('Error saving DOCX file:', error);  //Debug log
       await this.showWarningToast('SCAN.ERROR_SAVED');
     }
   }

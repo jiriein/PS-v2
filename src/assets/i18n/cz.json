@@ -53,6 +53,7 @@
     "SCAN.ERROR_TEXT": "Sken textu se nezdařil",
     "SCAN.ERROR_SAVED": "Text se nepodařilo uložit",
     "SCAN.ERROR_PDF_PROCESSING": "Skenování PDF se nezdařilo",
+    "SCAN.UNSUPPORTED_FILE_TYPE": "Nepodporovaný typ souboru",
     "SCAN.DOC_NOT_SUPPORTED_WEB": "Soubory DOC nejsou v prohlížeči podporovány. Použijte mobilní zařízení nebo převeďte na DOCX."
 
   }
