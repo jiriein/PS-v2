@@ -54,6 +54,10 @@
     "SCAN.ERROR_SAVED": "Failed to save text to file",
     "SCAN.ERROR_PDF_PROCESSING": "Failed to process PDF file",
     "SCAN.UNSUPPORTED_FILE_TYPE": "Unsupported file type",
-    "SCAN.DOC_NOT_SUPPORTED_WEB": "DOC files are not supported in the browser. Please use a mobile device or convert to DOCX."
+    "SCAN.DOC_NOT_SUPPORTED_WEB": "DOC files are not supported in the browser. Please use a mobile device or convert to DOCX.",
+
+    "SCAN.FIND_PATTERNS": "Find Patterns",
+    "SCAN.NO_PATTERNS_FOUND": "No patterns found",
+    "SCAN.PATTERNS_FOUND": "Patterns found"
 
     }

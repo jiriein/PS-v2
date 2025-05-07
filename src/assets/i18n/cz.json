@@ -54,6 +54,10 @@
     "SCAN.ERROR_SAVED": "Text se nepodařilo uložit",
     "SCAN.ERROR_PDF_PROCESSING": "Skenování PDF se nezdařilo",
     "SCAN.UNSUPPORTED_FILE_TYPE": "Nepodporovaný typ souboru",
-    "SCAN.DOC_NOT_SUPPORTED_WEB": "Soubory DOC nejsou v prohlížeči podporovány. Použijte mobilní zařízení nebo převeďte na DOCX."
+    "SCAN.DOC_NOT_SUPPORTED_WEB": "Soubory DOC nejsou v prohlížeči podporovány. Použijte mobilní zařízení nebo převeďte na DOCX.",
+
+    "SCAN.FIND_PATTERNS": "Najít vzory regulací",
+    "SCAN.NO_PATTERNS_FOUND": "Žádné vzory regulací nebyly nalezeny",
+    "SCAN.PATTERNS_FOUND": "Vzory regulací byly nalezeny"
 
   }

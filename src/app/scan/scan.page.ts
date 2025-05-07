@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, Inject, ViewChild, ElementRef, AfterViewInit, ChangeDetectorRef} from '@angular/core';
 import { FileTransfer, FileTransferObject } from '@awesome-cordova-plugins/file-transfer/ngx';
+import { RegulationPatternService } from '../services/regulation-pattern.service';
 import { ActionSheetController, Platform, ToastController } from '@ionic/angular';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { File as CordovaFile } from '@awesome-cordova-plugins/file/ngx';
@@ -16,12 +17,14 @@ import * as mammoth from 'mammoth';
 import * as JSZip from 'jszip';
 import Quill from 'quill';
 
+
 @Component({
   selector: 'app-scan',
   templateUrl: './scan.page.html',
   styleUrls: ['./scan.page.scss'],
-  standalone: false
+  standalone: false,
 })
+
 export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
   fileTransfer: FileTransferObject;
   isNative: boolean = Capacitor.getPlatform() !== 'web';
@@ -31,6 +34,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('editor', { static: false }) editorElement!: ElementRef;
   quillEditor: Quill | undefined;
   recognizedText: string | undefined = '';
+  matches: { text: string; start: number; end: number; standardized?: string }[] = [];
 
   constructor(
     private fileChooser: FileChooser,
@@ -41,7 +45,8 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     private fileOpener: FileOpener,
     private transfer: FileTransfer,
     @Inject(CordovaFile) private file: CordovaFile,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private regulationPatternService: RegulationPatternService
   ) {
     this.fileTransfer = this.transfer.create();
     (pdfjsLib as any).GlobalWorkerOptions.workerSrc = this.getWorkerSrc();
@@ -636,6 +641,23 @@ getMimeType(extension: string): string {
   // Get file extension 
   getFileExtension(fileUrl: string | undefined | null): string | null {
     return fileUrl ? fileUrl.split('.').pop()?.toLowerCase() || null : null;
+  }
+
+  // Find regulation patterns
+  async findRegulationPatterns() {
+    if (!this.recognizedText) {
+      await this.showWarningToast('SCAN.NO_TEXT');
+      return;
+    }
+
+    this.matches = this.regulationPatternService.findMatches(this.recognizedText);
+    console.log('Found matches:', this.matches); // Debug log
+
+    if (this.matches.length === 0) {
+      await this.showWarningToast('SCAN.NO_PATTERNS_FOUND');
+    } else {
+      await this.showInfoToast('SCAN.PATTERNS_FOUND');
+    }
   }
 
   // Toasts

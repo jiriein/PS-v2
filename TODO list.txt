@@ -13,3 +13,5 @@ figure how to save laws to favourites (favourites should have the option to down
 figure how to save law numbers and their dates for offline version?
 
 fix colors and other cosmetic stuff
+
+can be added function? - when taking picture(navite only) the picture can be cropped, so it does not look for text outside of the area

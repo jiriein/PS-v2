@@ -74,8 +74,11 @@
       <ion-card-content><div #editor class="quill-editor"></div></ion-card-content>
     </ion-card>
 
-    <!-- Button to save text to file -->
+    <!-- Buttons for text actions -->
     <div class="scan-section" *ngIf="recognizedText">
+      <ion-button expand="block" (click)="findRegulationPatterns()" [disabled]="!recognizedText || isProcessing">
+        {{ 'SCAN.FIND_PATTERNS' | translate }}
+      </ion-button>
       <ion-button expand="block" (click)="saveTextToFile()" [disabled]="!recognizedText || isProcessing">
         {{ 'SCAN.SAVE_TEXT' | translate }}
       </ion-button>
