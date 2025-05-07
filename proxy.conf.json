@@ -1,0 +1,10 @@
+{
+    "/api": {
+      "target": "https://www.zakonyprolidi.cz",
+      "secure": true,
+      "changeOrigin": true,
+      "pathRewrite": {
+        "^/api": ""
+      }
+    }
+}

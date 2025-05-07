@@ -4,18 +4,28 @@ import { Observable, throwError } from 'rxjs';
 import { Injectable } from '@angular/core';
 
 interface ApiResponse {
-  Api1: {
-    DocHead?: any; // API response data for DocHead method
-    Error?: { httpstatuscode: number; message?: string };
-    [key: string]: any; // Allow other dynamic keys
+  Result?: {
+    Title?: string;
+    EffectFrom?: string;
+    EffectTill?: string | null;
+    [key: string]: any;
   };
+  Api1?: {
+    DocHead?: any;
+    Error?: { httpstatuscode: number; message?: string };
+    [key: string]: any;
+  };
+  DocHead?: any;
+  Error?: { httpstatuscode: number; message?: string };
+  [key: string]: any;
 }
 
 @Injectable({
   providedIn: 'root',
 })
 export class ZakonyApiService {
-  private readonly baseUrl = 'https://www.zakonyprolidi.cz/api/v1/data.json';
+  //private readonly baseUrl = 'https://www.zakonyprolidi.cz/api/v1/data.json';
+  private readonly baseUrl = '/api/api/v1/data.json'; // Proxy path
   private readonly apiKey = 'test'; // Replace with your actual API key
 
   constructor(private http: HttpClient) {}
@@ -84,11 +94,32 @@ export class ZakonyApiService {
    * @returns Extracted result
    */
   private handleResponse(response: ApiResponse): any {
+    console.log('Raw API response:', response); // Debug log
+    if (!response) {
+      throw new Error('API error: Empty response');
+    }
+    // Check for Result (new structure)
+    if (response.Result) {
+      return response.Result;
+    }
+
+    // Check for direct Error or DocHead at root
+    if (response.Error && response.Error.httpstatuscode !== 200) {
+      throw new Error(`API error: ${response.Error.message || 'Unknown error'} (HTTP ${response.Error.httpstatuscode})`);
+    }
+    if (response.DocHead) {
+      return response.DocHead;
+    }
+
+    // Check Api1 structure
     const result = response.Api1;
+    if (!result) {
+      throw new Error('API error: Invalid response structure (missing Result or Api1)');
+    }
     if (result.Error && result.Error.httpstatuscode !== 200) {
       throw new Error(`API error: ${result.Error.message || 'Unknown error'} (HTTP ${result.Error.httpstatuscode})`);
     }
-    return result['DocHead'] || result; // Return DocHead data or full result
+    return result.DocHead || result;
   }
 
   /**
@@ -103,7 +134,11 @@ export class ZakonyApiService {
       errorMessage = `Client error: ${error.error.message}`;
     } else {
       // Server-side error
-      errorMessage = `Server error: ${error.status} - ${error.message}`;
+      if (error.status === 500) {
+        errorMessage = `Server error: HTTP 500 - Internal Server Error. Wrong API key or the document may not exist.`;
+      } else {
+        errorMessage = `Server error: ${error.status} - ${error.message}`;
+      }
       if (error.error?.Api1?.Error) {
         errorMessage = `API error: ${error.error.Api1.Error.message || 'Unknown error'} (HTTP ${error.error.Api1.Error.httpstatuscode})`;
       }
