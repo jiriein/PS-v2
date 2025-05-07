@@ -19,11 +19,11 @@ export class RegulationPatternService {
     let match: RegExpExecArray | null;
     while ((match = regex.exec(text)) !== null) {
       // Determine the prefix for standardization
-      let prefix = 'n.v.';
+      let prefix = 'n.v.'; // Narizeni vlady
       if (match[0].match(/^(z\.?|zak|zák|zakon|zákon)/i)) {
-        prefix = 'z.';
+        prefix = 'z.'; // Zakon
       } else if (match[0].match(/^(v\.?|vyhl|vyhlaska|vyhláška|vyhlaška|vyhláska|vahlaska|vahláska|vahláška|vahlaška|y\.?|yyhl|yyhlaska|yyhláška|yyhlaška|yyhláska|yahlaska|yahláska|yahláška|yahlaška)/i)) {
-        prefix = 'v.';
+        prefix = 'v.'; // Vyhlaska
       }
 
       matches.push({

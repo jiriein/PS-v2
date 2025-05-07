@@ -1,0 +1,38 @@
+.scan-section {
+    padding: 16px;
+  }
+  
+  .quill-editor {
+    .ql-container {
+      .ql-editor {
+        [style*="background: gray"] {
+          background-color: #d3d3d3 !important; /* Light gray */
+        }
+        [style*="background: green"] {
+          background-color: #90ee90 !important; /* Light green */
+        }
+        [style*="background: red"] {
+          background-color: #ffcccb !important; /* Light red */
+        }
+      }
+    }
+  }
+  
+  .error {
+    color: red;
+    font-style: italic;
+  }
+  
+  ion-list {
+    margin-top: 8px;
+  }
+  
+  ion-item {
+    --padding-start: 16px;
+    --padding-end: 16px;
+  }
+  
+  ion-spinner {
+    display: block;
+    margin: 16px auto;
+  }

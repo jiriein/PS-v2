@@ -1,12 +1,13 @@
-import { Component, OnInit, OnDestroy, Inject, ViewChild, ElementRef, AfterViewInit, ChangeDetectorRef} from '@angular/core';
+import { Component, OnInit, OnDestroy, Inject, ViewChild, ElementRef, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { FileTransfer, FileTransferObject } from '@awesome-cordova-plugins/file-transfer/ngx';
 import { RegulationPatternService } from '../services/regulation-pattern.service';
 import { ActionSheetController, Platform, ToastController } from '@ionic/angular';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { File as CordovaFile } from '@awesome-cordova-plugins/file/ngx';
 import { FileChooser } from '@awesome-cordova-plugins/file-chooser/ngx';
-import { Filesystem, Directory} from '@capacitor/filesystem';
 import { FileOpener } from '@awesome-cordova-plugins/file-opener/ngx';
+import { ZakonyApiService } from '../services/zakony-api.service';
+import { Filesystem, Directory} from '@capacitor/filesystem';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { TranslateService } from '@ngx-translate/core';
 import { createWorker, Worker } from 'tesseract.js';
@@ -35,6 +36,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
   quillEditor: Quill | undefined;
   recognizedText: string | undefined = '';
   matches: { text: string; start: number; end: number; standardized?: string }[] = [];
+  apiResults: { standardized: string; result?: any; error?: string; highlightColor?: string }[] = [];
 
   constructor(
     private fileChooser: FileChooser,
@@ -46,6 +48,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     private transfer: FileTransfer,
     @Inject(CordovaFile) private file: CordovaFile,
     private cdr: ChangeDetectorRef,
+    private zakonyApiService: ZakonyApiService,
     private regulationPatternService: RegulationPatternService
   ) {
     this.fileTransfer = this.transfer.create();
@@ -651,14 +654,80 @@ getMimeType(extension: string): string {
     }
 
     this.matches = this.regulationPatternService.findMatches(this.recognizedText);
-    console.log('Found matches:', this.matches); // Debug log
+    console.log('Found matches:', this.matches);
 
     if (this.matches.length === 0) {
       await this.showWarningToast('SCAN.NO_PATTERNS_FOUND');
     } else {
       await this.showInfoToast('SCAN.PATTERNS_FOUND');
-      this.highlightMatches();
+      this.highlightMatches(); // Initial gray highlights
+      await this.fetchApiResults(); // Fetch API results and update highlights
     }
+  }
+
+  private async fetchApiResults() {
+    this.apiResults = [];
+    this.isProcessing = true;
+
+    for (const match of this.matches) {
+      if (!match.standardized) continue;
+      let highlightColor = 'gray'; // Default
+      try {
+        const result = await this.zakonyApiService.getDocHead(match.standardized).toPromise();
+        highlightColor = this.determineHighlightColor(result);
+        this.apiResults.push({ standardized: match.standardized, result, highlightColor });
+      } catch (error: any) {
+        this.apiResults.push({
+          standardized: match.standardized,
+          error: error.message || 'Failed to fetch data',
+          highlightColor,
+        });
+      }
+    }
+
+    this.isProcessing = false;
+    console.log('API results:', this.apiResults);
+    this.highlightMatches(); // Re-highlight based on API results
+    this.cdr.detectChanges();
+  }
+
+  private determineHighlightColor(result: any): string {
+    const effectFrom = result?.EffectFrom;
+    const effectTill = result?.EffectTill;
+
+    if (!effectFrom) {
+      return 'gray'; // No valid dates
+    }
+
+    // Parse EffectFrom (e.g., "/Date(1167606000000+0100)/")
+    const fromMatch = effectFrom.match(/\/Date\((\d+)([+-]\d{4})\)\//);
+    if (!fromMatch) {
+      return 'gray'; // Invalid date format
+    }
+
+    const timestamp = parseInt(fromMatch[1], 10);
+    const fromDate = new Date(timestamp);
+
+    const currentDate = new Date();
+
+    // Check if regulation is effective
+    if (effectTill === null && fromDate <= currentDate) {
+      return 'green'; // Currently effective
+    }
+
+    // Parse EffectTill if present
+    if (effectTill) {
+      const tillMatch = effectTill.match(/\/Date\((\d+)([+-]\d{4})\)\//);
+      if (tillMatch) {
+        const tillTimestamp = parseInt(tillMatch[1], 10);
+        const tillDate = new Date(tillTimestamp);
+        if (tillDate < currentDate) {
+          return 'red'; // No longer effective
+        }
+      }
+    }
+
+    return 'gray'; // Default for other cases (e.g., future dates, invalid Till)
   }
 
   highlightMatches() {
@@ -666,14 +735,16 @@ getMimeType(extension: string): string {
       console.warn('Cannot highlight: Quill editor or matches not available');
       return;
     }
-  
-    // Clear existing formats to avoid overlapping highlights
+
+    // Clear existing highlights
     this.quillEditor.formatText(0, this.recognizedText?.length || 0, { background: false });
-  
-    // Apply background to each match
+
+    // Apply highlights based on apiResults or default to gray
     this.matches.forEach(match => {
+      const apiResult = this.apiResults.find(r => r.standardized === match.standardized);
+      const color = apiResult?.highlightColor || 'gray';
       this.quillEditor!.formatText(match.start, match.end - match.start, {
-        background: 'gray',
+        background: color,
       });
     });
   }
