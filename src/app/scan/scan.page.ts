@@ -653,7 +653,7 @@ getMimeType(extension: string): string {
       return;
     }
 
-    this.matches = this.regulationPatternService.findMatches(this.recognizedText);
+    this.matches = this.regulationPatternService.findRegulationPatterns(this.recognizedText);
     console.log('Found matches:', this.matches);
 
     if (this.matches.length === 0) {
