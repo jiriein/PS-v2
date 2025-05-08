@@ -26,7 +26,7 @@ interface ApiResponse {
 export class ZakonyApiService {
   //private readonly baseUrl = 'https://www.zakonyprolidi.cz/api/v1/data.json';
   private readonly baseUrl = '/api/api/v1/data.json'; // Proxy path
-  private readonly apiKey = 'test'; // Replace with your actual API key
+  private readonly apiKey = 'd153836b8ea44bda977f69a13b5bca51'; // Replace with your actual API key
 
   constructor(private http: HttpClient) {}
 
