@@ -23,10 +23,11 @@ interface ApiResponse {
 @Injectable({
   providedIn: 'root',
 })
+
 export class ZakonyApiService {
   //private readonly baseUrl = 'https://www.zakonyprolidi.cz/api/v1/data.json';
   private readonly baseUrl = '/api/api/v1/data.json'; // Proxy path
-  private readonly apiKey = 'd153836b8ea44bda977f69a13b5bca51'; // Replace with your actual API key
+  private readonly apiKey = 'test'; // Replace with your actual API key
 
   constructor(private http: HttpClient) {}
 
@@ -34,7 +35,7 @@ export class ZakonyApiService {
    * Fetches document metadata using the DocHead method.
    * @param standardized Standardized regulation text (e.g., "n.v. c. 123/2020 sb.")
    * @returns Observable with the API response
-   */
+  */
   getDocHead(standardized: string): Observable<any> {
     const { collection, document } = this.parseStandardizedText(standardized);
     const url = `${this.baseUrl}/DocHead`;
@@ -51,10 +52,30 @@ export class ZakonyApiService {
   }
 
   /**
+   * Fetches document data using the DocData method.
+   * @param collection Collection identifier (e.g., "cs")
+   * @param document Document identifier (e.g., "2006-262")
+   * @returns Observable with the API response
+  */
+getDocData(collection: string, document: string): Observable<any> {
+  const url = `${this.baseUrl}/DocData`;
+  const params = {
+    apikey: this.apiKey,
+    Collection: collection,
+    Document: document,
+  };
+
+  return this.http.get<ApiResponse>(url, { params }).pipe(
+    map(response => this.handleResponse(response)),
+    catchError(this.handleError)
+  );
+}
+
+  /**
    * Parses standardized text into Collection and Document parameters.
    * @param standardized Standardized text (e.g., "n.v. c. 123/2020 sb.")
    * @returns Object with collection and document
-   */
+  */
   private parseStandardizedText(standardized: string): { collection: string; document: string } {
     // Extract prefix and number (e.g., "n.v. c. 123/2020 sb." -> prefix: "n.v.", number: "123/2020")
     const match = standardized.match(/^(n\.v\.|z\.|v\.)\s*c\.\s*(\d{2,4}\/\d{2,4})\s*sb\.$/i);
@@ -68,17 +89,17 @@ export class ZakonyApiService {
     // Map prefix to Collection
     let collection: string;
     switch (prefix.toLowerCase()) {
-      case 'n.v.':
-        collection = 'cs'; // Regulation (nařízení vlády)
+      case 'n.v.':        // nařízení vlády
+        collection = 'cs';
         break;
-      case 'z.':
-        collection = 'cs'; // Law (zákon)
+      case 'z.':          // zákon
+        collection = 'cs';
         break;
-      case 'v.':
-        collection = 'cs'; // Decree (vyhláška)
+      case 'v.':          // vyhláška
+        collection = 'cs';
         break;
-      default:
-        collection = 'cs'; // Default to Czech collection
+      default:            // Default to Czech collection
+        collection = 'cs';
     }
 
     // Format Document as "YYYY-NNN" (e.g., "123/2020" -> "2020-123")
@@ -92,7 +113,7 @@ export class ZakonyApiService {
    * Processes the API response, extracting the result or throwing an error.
    * @param response API response
    * @returns Extracted result
-   */
+  */
   private handleResponse(response: ApiResponse): any {
     console.log('Raw API response:', response); // Debug log
     if (!response) {
@@ -126,7 +147,7 @@ export class ZakonyApiService {
    * Handles HTTP errors.
    * @param error HttpErrorResponse
    * @returns Observable with error
-   */
+  */
   private handleError(error: HttpErrorResponse): Observable<never> {
     let errorMessage = 'An error occurred';
     if (error.error instanceof ErrorEvent) {
