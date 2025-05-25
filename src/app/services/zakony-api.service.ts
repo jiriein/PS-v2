@@ -76,7 +76,7 @@ getDocData(collection: string, document: string): Observable<any> {
    * @param standardized Standardized text (e.g., "n.v. c. 123/2020 sb.")
    * @returns Object with collection and document
   */
-  private parseStandardizedText(standardized: string): { collection: string; document: string } {
+  public parseStandardizedText(standardized: string): { collection: string; document: string } {
     // Extract prefix and number (e.g., "n.v. c. 123/2020 sb." -> prefix: "n.v.", number: "123/2020")
     const match = standardized.match(/^(n\.v\.|z\.|v\.)\s*c\.\s*(\d{2,4}\/\d{2,4})\s*sb\.$/i);
     if (!match) {

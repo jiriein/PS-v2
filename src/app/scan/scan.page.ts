@@ -1,23 +1,27 @@
 import { Component, OnInit, OnDestroy, Inject, ViewChild, ElementRef, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { ActionSheetController, Platform, ToastController, NavController } from '@ionic/angular';
 import { FileTransfer, FileTransferObject } from '@awesome-cordova-plugins/file-transfer/ngx';
 import { RegulationPatternService } from '../services/regulation-pattern.service';
-import { ActionSheetController, Platform, ToastController } from '@ionic/angular';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { File as CordovaFile } from '@awesome-cordova-plugins/file/ngx';
 import { FileChooser } from '@awesome-cordova-plugins/file-chooser/ngx';
 import { FileOpener } from '@awesome-cordova-plugins/file-opener/ngx';
 import { ZakonyApiService } from '../services/zakony-api.service';
-import { Filesystem, Directory} from '@capacitor/filesystem';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { TranslateService } from '@ngx-translate/core';
 import { createWorker, Worker } from 'tesseract.js';
+import Quill, { QuillOptions } from 'quill';
 import { Capacitor } from '@capacitor/core';
 import * as pdfjsLib from 'pdfjs-dist';
 import { saveAs } from 'file-saver';
 import * as mammoth from 'mammoth';
 import * as JSZip from 'jszip';
-import Quill from 'quill';
 
+// Define interface for Quill toolbar module
+interface QuillToolbar {
+  addHandler(event: string, callback: (value: string) => void): void;
+}
 
 @Component({
   selector: 'app-scan',
@@ -49,7 +53,8 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     @Inject(CordovaFile) private file: CordovaFile,
     private cdr: ChangeDetectorRef,
     private zakonyApiService: ZakonyApiService,
-    private regulationPatternService: RegulationPatternService
+    private regulationPatternService: RegulationPatternService,
+    private navCtrl: NavController
   ) {
     this.fileTransfer = this.transfer.create();
     (pdfjsLib as any).GlobalWorkerOptions.workerSrc = this.getWorkerSrc();
@@ -64,23 +69,32 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
 
   private initializeQuillEditor() {
     if (this.editorElement && this.editorElement.nativeElement) {
+      const toolbarOptions = [
+        ['bold', 'italic', 'underline'],
+        [{ 'background': [] }], // Highlighting
+        ['link'], // Hyperlink
+        ['clean'] // Remove formatting
+      ];
       this.quillEditor = new Quill(this.editorElement.nativeElement, {
         theme: 'snow',
         modules: {
-          toolbar: [
-            ['bold', 'italic', 'underline'],
-            [{ 'background': [] }], // Highlighting
-            ['link'], // Hyperlink
-            ['clean'] // Remove formatting
-          ]
+          toolbar: toolbarOptions
         },
         placeholder: this.translate.instant('SCAN.EDIT_TEXT')
-      });
+      } as QuillOptions);
 
       // Set initial text if recognizedText exists
       if (this.recognizedText) {
         this.setEditorContent(this.recognizedText);
       }
+
+      // Add toolbar link handler
+      const toolbar = this.quillEditor.getModule('toolbar') as QuillToolbar;
+      toolbar.addHandler('link', (value: string) => {
+        if (value && this.quillEditor) {
+          this.navCtrl.navigateForward(value);
+        }
+      });
 
       // Update recognizedText when editor content changes
       this.quillEditor.on('text-change', () => {
@@ -737,14 +751,22 @@ getMimeType(extension: string): string {
     }
 
     // Clear existing highlights
-    this.quillEditor.formatText(0, this.recognizedText?.length || 0, { background: false });
+    this.quillEditor.formatText(0, this.recognizedText?.length || 0, { background: false, link: false });
 
     // Apply highlights based on apiResults or default to gray
     this.matches.forEach(match => {
       const apiResult = this.apiResults.find(r => r.standardized === match.standardized);
       const color = apiResult?.highlightColor || 'gray';
+      let collection = 'cs';
+      let document = '';
+      if (match.standardized) {
+        const parsed = this.zakonyApiService.parseStandardizedText(match.standardized);
+        collection = parsed.collection;
+        document = parsed.document;
+      }
       this.quillEditor!.formatText(match.start, match.end - match.start, {
         background: color,
+        link: `/document-detail/${collection}/${document}`
       });
     });
   }

@@ -58,6 +58,15 @@
 
     "SCAN.FIND_PATTERNS": "Najít vzory regulací",
     "SCAN.NO_PATTERNS_FOUND": "Žádné vzory regulací nebyly nalezeny",
-    "SCAN.PATTERNS_FOUND": "Vzory regulací byly nalezeny"
+    "SCAN.PATTERNS_FOUND": "Vzory regulací byly nalezeny",
+
+    "DOCUMENT_DETAIL.TITLE": "Detail dokumentu",
+    "DOCUMENT_DETAIL.EFFECT_FROM": "Účinnost od",
+    "DOCUMENT_DETAIL.EFFECT_TILL": "Účinnost do",
+    "DOCUMENT_DETAIL.CONTENT": "Obsah",
+    "DOCUMENT_DETAIL.NO_DATA": "Žádná data k dispozici",
+    "DOCUMENT_DETAIL.NO_CONTENT": "Žádný obsah k dispozici",
+    "DOCUMENT_DETAIL.ERROR_FETCH": "Chyba při načítání dat dokumentu",
+    "DOCUMENT_DETAIL.NO_DOCUMENT": "Není zadán žádný dokument"
 
   }

@@ -58,6 +58,15 @@
 
     "SCAN.FIND_PATTERNS": "Find Patterns",
     "SCAN.NO_PATTERNS_FOUND": "No patterns found",
-    "SCAN.PATTERNS_FOUND": "Patterns found"
+    "SCAN.PATTERNS_FOUND": "Patterns found",
+
+    "DOCUMENT_DETAIL.TITLE": "Document detail",
+    "DOCUMENT_DETAIL.EFFECT_FROM": "Effect From",
+    "DOCUMENT_DETAIL.EFFECT_TILL": "Effect Till",
+    "DOCUMENT_DETAIL.CONTENT": "Content",
+    "DOCUMENT_DETAIL.NO_DATA": "No data available",
+    "DOCUMENT_DETAIL.NO_CONTENT": "No content available",
+    "DOCUMENT_DETAIL.ERROR_FETCH": "Failed to fetch document data",
+    "DOCUMENT_DETAIL.NO_DOCUMENT": "No document selected"
 
     }

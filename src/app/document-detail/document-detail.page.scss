@@ -1,0 +1,48 @@
+.document-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  color: var(--ion-text-color);
+}
+
+ion-card {
+  margin: 0 0 1rem 0;
+  box-shadow: var(--ion-box-shadow);
+}
+
+ion-card-content {
+  padding: 1rem;
+}
+
+.document-content {
+  font-size: 1rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+
+  h2 {
+    font-size: 1.4rem;
+    font-weight: bold;
+    margin: 1.5rem 0 1rem;
+    color: var(--ion-color-primary);
+  }
+
+  h3 {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin: 1rem 0 0.5rem;
+  }
+
+  p {
+    margin: 0.5rem 0;
+    text-align: justify;
+  }
+
+  strong {
+    font-weight: bold;
+  }
+}
+
+ion-spinner {
+  display: block;
+  margin: 2rem auto;
+}
