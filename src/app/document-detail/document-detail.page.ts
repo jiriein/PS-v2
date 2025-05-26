@@ -14,6 +14,8 @@ import { Observable } from 'rxjs';
 export class DocumentDetailPage implements OnInit {
   documentData: any = null;
   isLoading: boolean = false;
+  highlightColor: string = 'gray';
+  standardized: string = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -23,13 +25,23 @@ export class DocumentDetailPage implements OnInit {
   ) {}
 
   ngOnInit() {
-    const collection = this.route.snapshot.paramMap.get('collection') || 'cs';
-    const document = this.route.snapshot.paramMap.get('document') || '';
-
-    if (document) {
-      this.fetchDocumentData(collection, document);
+    // Get data from router state (passed from scan.page.ts)
+    const state = window.history.state;
+    if (state.result) {
+      this.documentData = state.result;
+      this.highlightColor = state.highlightColor || 'gray';
+      this.standardized = state.standardized || '';
+      this.isLoading = false;
+      console.log('Using state data:', { documentData: this.documentData, highlightColor: this.highlightColor, standardized: this.standardized });
     } else {
-      this.showWarningToast('DOCUMENT_DETAIL.NO_DOCUMENT');
+      // Fallback: Fetch data if no state (e.g., page refresh)
+      const collection = this.route.snapshot.paramMap.get('collection') || 'cs';
+      const document = this.route.snapshot.paramMap.get('document') || '';
+      if (document) {
+        this.fetchDocumentData(collection, document);
+      } else {
+        this.showWarningToast('DOCUMENT_DETAIL.NO_DOCUMENT');
+      }
     }
   }
 
@@ -41,7 +53,7 @@ export class DocumentDetailPage implements OnInit {
         next: (data) => {
           this.documentData = data.Result || data;
           this.isLoading = false;
-          console.log('Document data:', this.documentData); // Debug log
+          console.log('Document data fetched:', this.documentData); // Debug log
         },
         error: (error) => {
           this.isLoading = false;

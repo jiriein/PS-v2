@@ -83,13 +83,13 @@ export class RegulationPatternService {
   private standardizeRegulation(text: string): string {
     let prefix = '';
     if (text.match(/^(?:Nař\.?|n\.?|nařízení|narizeni|NV|N\.V\.)/iu)) {
-      prefix = 'n. v.'; // Narizeni vlady
+      prefix = 'n.v.'; // Narizeni vlady
     } else if (text.match(/^(?:Vyhl\.?|v\.?|vyhláška|vyhlaska)/iu)) {
       prefix = 'v.';  // Vyhlaska
     } else if (text.match(/^(?:Zák\.?|z\.?|zákon|zakon)/iu)) {
       prefix = 'z.';  // Zakon
     } else if (text.match(/^Sdělení(?:\s+[A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]{2,})?/iu)) {
-      prefix = 's.';  // Sdelení
+      prefix = 's.';  // Sdeleni
     }
 
     const numberMatch = text.match(/(\d{1,4}\/\d{2,4})/);

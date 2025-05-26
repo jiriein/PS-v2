@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { Storage } from '@ionic/storage-angular';
-import { Preferences } from '@capacitor/preferences';
 import { TranslateService } from '@ngx-translate/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 
@@ -13,6 +12,7 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 
 export class SettingsPage implements OnInit {
   settingsForm: FormGroup;
+  apiKeyForm: FormGroup;
   showApiKey: boolean = false;
 
   constructor(private formBuilder: FormBuilder, private translate: TranslateService, private storage: Storage) {
@@ -20,7 +20,9 @@ export class SettingsPage implements OnInit {
       theme: [false], // Boolean: true = dark, false = classic
       language: ['cz'],
       fontSize: ['medium'],
-      customFontSize: [''],
+      customFontSize: ['']
+    });
+    this.apiKeyForm = this.formBuilder.group({
       apiKey: ['']
     });
 
@@ -35,7 +37,7 @@ export class SettingsPage implements OnInit {
     this.settingsForm.get('theme')?.valueChanges.subscribe((isDark) => {
       document.body.classList.toggle('dark-theme', isDark);
     });
-    this.settingsForm.get('apiKey')?.valueChanges.subscribe((value) => {
+    this.apiKeyForm.get('apiKey')?.valueChanges.subscribe((value) => {
       this.storage.set('apiKey', value);
     });
   }
@@ -45,9 +47,10 @@ export class SettingsPage implements OnInit {
     const language = await this.storage.get('language') || 'cz';
     const fontSize = await this.storage.get('fontSize') || 'medium';
     const customFontSize = await this.storage.get('customFontSize') || '';
-    const apiKey = await this.storage.get('apiKey') || 'test'; // Default to 'test'
+    const apiKey = await this.storage.get('apiKey') || 'test';
 
-    this.settingsForm.patchValue({ theme: theme === 'dark', language, fontSize, customFontSize, apiKey });
+    this.settingsForm.patchValue({ theme: theme === 'dark', language, fontSize, customFontSize });
+    this.apiKeyForm.patchValue({ apiKey });
   }
 
   // Handle Theme Change

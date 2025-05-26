@@ -47,3 +47,29 @@
     <p class="ion-text-center">{{ 'DOCUMENT_DETAIL.NO_DATA' | translate }}</p>
   </div>
 </ion-content>
+
+<!--
+<ion-header>
+  <ion-toolbar>
+    <ion-title>{{ standardized }}</ion-title>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/scan"></ion-back-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-loading *ngIf="isLoading" message="Loading..."></ion-loading>
+
+  <div *ngIf="documentData" [ngStyle]="{'background-color': highlightColor}">
+    <h2 *ngIf="documentData.Title">{{ documentData.Title }}</h2>
+    <p *ngIf="documentData.EffectFrom">Effective From: {{ formatDate(documentData.EffectFrom) }}</p>
+    <p *ngIf="documentData.EffectTill">Effective Till: {{ formatDate(documentData.EffectTill) }}</p>
+    <div [innerHTML]="formatContent(documentData.Body)"></div>
+  </div>
+
+  <div *ngIf="!documentData && !isLoading" class="ion-text-center">
+    <p>{{ 'DOCUMENT_DETAIL.NO_DATA' | translate }}</p>
+  </div>
+</ion-content>
+-->

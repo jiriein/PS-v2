@@ -12,7 +12,7 @@ const routes: Routes = [
     loadChildren: () => import('./tabs/tabs.module').then(m => m.TabsPageModule)
   },
   {
-    path: 'document-detail',
+    path: 'document-detail/:collection/:document',
     loadChildren: () => import('./document-detail/document-detail.module').then( m => m.DocumentDetailPageModule)
   }
 ];

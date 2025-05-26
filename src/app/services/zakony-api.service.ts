@@ -3,6 +3,7 @@ import { catchError, map } from 'rxjs/operators';
 import { Storage } from '@ionic/storage-angular';
 import { Observable, throwError } from 'rxjs';
 import { Injectable } from '@angular/core';
+import { tap } from 'rxjs/operators';
 
 
 interface ApiResponse {
@@ -29,6 +30,7 @@ interface ApiResponse {
 export class ZakonyApiService {
   //private readonly baseUrl = 'https://www.zakonyprolidi.cz/api/v1/data.json';
   private readonly baseUrl = '/api/api/v1/data.json'; // Proxy path
+  // my API key: d153836b8ea44bda977f69a13b5bca51
 
   constructor(private http: HttpClient, private storage: Storage) {
     this.storage.create();
@@ -59,6 +61,7 @@ export class ZakonyApiService {
     };
 
     return this.http.get<ApiResponse>(url, { params }).pipe(
+      tap(() => {console.log("API DocHead request: " + url, params )}), // Debug log
       map(response => this.handleResponse(response)),
       catchError(this.handleError)
     );
@@ -80,6 +83,7 @@ export class ZakonyApiService {
     };
 
     return this.http.get<ApiResponse>(url, { params }).pipe(
+      tap(() => {console.log("API DocData request: " + url, params )}), // Debug log
       map(response => this.handleResponse(response)),
       catchError(this.handleError)
     );
@@ -91,9 +95,9 @@ export class ZakonyApiService {
    * @returns Object with collection and document
   */
   public parseStandardizedText(standardized: string): { collection: string; document: string } {
-    // Extract prefix and number (e.g., "n.v. c. 123/2020 sb." -> prefix: "n.v.", number: "123/2020")
     const match = standardized.match(/^(n\.v\.|z\.|v\.)\s*c\.\s*(\d{2,4}\/\d{2,4})\s*sb\.$/i);
     if (!match) {
+      console.warn(`Invalid standardized format: "${standardized}"`);
       throw new Error('Invalid standardized format');
     }
 
@@ -103,23 +107,18 @@ export class ZakonyApiService {
     // Map prefix to Collection
     let collection: string;
     switch (prefix.toLowerCase()) {
-      case 'n.v.':        // nařízení vlády
+      case 'n.v.': // nařízení vlády
+      case 'z.': // zákon
+      case 'v.': // vyhláška
         collection = 'cs';
         break;
-      case 'z.':          // zákon
-        collection = 'cs';
-        break;
-      case 'v.':          // vyhláška
-        collection = 'cs';
-        break;
-      default:            // Default to Czech collection
+      default:
         collection = 'cs';
     }
 
     // Format Document as "YYYY-NNN" (e.g., "123/2020" -> "2020-123")
     const [num, year] = number.split('/');
     const document = `${year}-${num}`;
-
     return { collection, document };
   }
 

@@ -10,18 +10,17 @@
   </ion-header>
 
   <ion-content>
-    <form>
- 
+    <form [formGroup]="settingsForm">
       <!-- Theme Selection -->
       <ion-item>
         <ion-label>{{'THEME' | translate}}</ion-label>
-        <ion-toggle color="dark" (ionChange)="onThemeChange($event)"></ion-toggle>
+        <ion-toggle color="dark" formControlName="theme" (ionChange)="onThemeChange($event)"></ion-toggle>
       </ion-item>
 
       <!-- Language Selection -->
       <ion-item>
         <ion-label>{{'LANGUAGE' | translate}}</ion-label>
-        <ion-select (ionChange)="onLanguageChange($event)">
+        <ion-select formControlName="language" (ionChange)="onLanguageChange($event)">
           <ion-select-option value="cz">{{'CZECH' | translate}}</ion-select-option>
           <ion-select-option value="en">{{'ENGLISH' | translate}}</ion-select-option>
         </ion-select>
@@ -30,7 +29,7 @@
       <!-- Font Size Selection -->
       <ion-item>
         <ion-label>{{'FONT_SIZE' | translate}}</ion-label>
-        <ion-select (ionChange)="onFontSizeChange($event)">
+        <ion-select formControlName="fontSize" (ionChange)="onFontSizeChange($event)">
           <ion-select-option value="small">{{'SMALL' | translate}}</ion-select-option>
           <ion-select-option value="medium">{{'MEDIUM' | translate}}</ion-select-option>
           <ion-select-option value="big">{{'BIG' | translate}}</ion-select-option>
@@ -48,7 +47,7 @@
   </ion-content>
 
   <ion-content>
-    <form>
+    <form [formGroup]="apiKeyForm">
       <!-- API Key Input -->
       <ion-item>
         <ion-label>{{'API_KEY' | translate}}</ion-label>

@@ -13,6 +13,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { createWorker, Worker } from 'tesseract.js';
 import Quill, { QuillOptions } from 'quill';
 import { Capacitor } from '@capacitor/core';
+import { Router } from '@angular/router';
 import * as pdfjsLib from 'pdfjs-dist';
 import { saveAs } from 'file-saver';
 import * as mammoth from 'mammoth';
@@ -39,8 +40,8 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('editor', { static: false }) editorElement!: ElementRef;
   quillEditor: Quill | undefined;
   recognizedText: string | undefined = '';
-  matches: { text: string; start: number; end: number; standardized?: string }[] = [];
-  apiResults: { standardized: string; result?: any; error?: string; highlightColor?: string }[] = [];
+  matches: { text: string, start: number, end: number, standardized?: string }[] = [];
+  apiResults: { standardized: string, result?: any, error?: string, highlightColor?: string }[] = [];
 
   constructor(
     private fileChooser: FileChooser,
@@ -54,7 +55,8 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     private cdr: ChangeDetectorRef,
     private zakonyApiService: ZakonyApiService,
     private regulationPatternService: RegulationPatternService,
-    private navCtrl: NavController
+    private navCtrl: NavController,
+    private router: Router
   ) {
     this.fileTransfer = this.transfer.create();
     (pdfjsLib as any).GlobalWorkerOptions.workerSrc = this.getWorkerSrc();
@@ -62,7 +64,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
 
 
   ngAfterViewInit() {
-    console.log('ngAfterViewInit - Editor element:', this.editorElement); //Debug log
+    console.log('ngAfterViewInit - Editor element:', this.editorElement); // Debug log
     this.initializeQuillEditor();
     this.cdr.detectChanges();
   }
@@ -92,7 +94,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       const toolbar = this.quillEditor.getModule('toolbar') as QuillToolbar;
       toolbar.addHandler('link', (value: string) => {
         if (value && this.quillEditor) {
-          this.navCtrl.navigateForward(value);
+          this.handleRegulationClick(value);
         }
       });
 
@@ -106,7 +108,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
           .join('')
           .trim();
       });
-      console.log('Quill editor initialized:', this.quillEditor); //Debug log
+      console.log('Quill editor initialized:', this.quillEditor); // Debug log
     } else {
       console.error('Editor element not found');
     }
@@ -127,7 +129,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       const delta = lines.map(line => ({
         insert: line + '\n'
       }));
-      console.log('setEditorContent delta:', delta); //Debug log
+      console.log('setEditorContent delta:', delta); // Debug log
       (this.quillEditor as Quill).setContents(delta);
     }
   }
@@ -140,7 +142,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private updateEditorText(text: string) {
-    console.log('updateEditorText input:', text); //Debug log
+    console.log('updateEditorText input:', text); // Debug log
     this.recognizedText = text;
     if (this.quillEditor && text) {
       this.setEditorContent(text);
@@ -184,7 +186,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
           data: base64Data,
           directory: Directory.Documents
         });
-        console.log('DOCX saved to:', fileName); //Debug log
+        console.log('DOCX saved to:', fileName); // Debug log
         await this.showInfoToast('SCAN.SUCCESS_SAVED');
 
         // Open the file
@@ -196,11 +198,11 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       } else {
         // Save file for web
         saveAs(blob, fileName);
-        console.log('DOCX downloaded:', fileName); //Debug log
+        console.log('DOCX downloaded:', fileName); // Debug log
         await this.showInfoToast('SCAN.SUCCESS_SAVED');
       }
     } catch (error) {
-      console.error('Error saving DOCX file:', error);  //Debug log
+      console.error('Error saving DOCX file:', error);  // Debug log
       await this.showWarningToast('SCAN.ERROR_SAVED');
     }
   }
@@ -223,7 +225,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
           if (text.trim()) {
             textRuns.push(new TextRun({ text }));
           }
-        }else if (node.nodeType === Node.ELEMENT_NODE) {
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
           const el = node as HTMLElement;
           const runProps: any = { text: el.textContent || '' };
 
@@ -279,7 +281,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     if (Capacitor.getPlatform() === 'web') {
       return '/assets/pdf.worker.min.mjs';
     } else {
-      return Capacitor.convertFileSrc('public/assets/pdf.worker.min.mjs');
+      return Capacitor.convertFileSrc('public/assets/pdf.worker.js');
     }
   }
 
@@ -287,9 +289,9 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     try {
       // Initialize Tesseract worker for Czech
       this.tesseractWorker = await createWorker('ces', 1, {
-        logger: (m) => console.log(m) // Log progress
+        logger: (m) => console.log(m) // Debug log
       });
-      console.log('Tesseract worker initialized'); //Debug log
+      console.log('Tesseract worker initialized'); // Debug log
     } catch (error) {
       console.error('Failed to initialize Tesseract worker:', error);
       await this.showWarningToast('SCAN.ERROR_TEXT');
@@ -308,13 +310,13 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     if (!this.isNative) return;
     try {
       const image = await Camera.getPhoto({
-        quality: 90, // Adjust the quality if too slow processing
+        quality: 95, // Adjust the quality if too slow processing
         allowEditing: false,
         resultType: CameraResultType.DataUrl, // DataUrl for Tesseract.js
         source: CameraSource.Camera
       });
       this.imageUrl = image.dataUrl;
-      console.log('Image captured from Camera:', this.imageUrl); //Debug log
+      console.log('Image captured from Camera:', this.imageUrl); // Debug log
       await this.showInfoToast('SCAN.SUCCESS_IMAGE');
     } catch (error) {
       console.error('Error capturing image from camera:', error);
@@ -333,7 +335,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
         source: CameraSource.Photos
       });
       this.imageUrl = image.dataUrl;
-      console.log('Image selected from Gallery:', this.imageUrl); //Debug log
+      console.log('Image selected from Gallery:', this.imageUrl); // Debug log
       await this.showInfoToast('SCAN.SUCCESS_IMAGE');
     } catch (error) {
       console.error('Error selecting image from gallery:', error);
@@ -361,7 +363,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
         await this.showWarningToast('SCAN.UNSUPPORTED_FILE_TYPE');
         return;
       }
-      console.log('Selected file extension:', fileExtension); //Debug log
+      console.log('Selected file extension:', fileExtension); // Debug log
       if (['png', 'jpg', 'jpeg'].includes(fileExtension)) {
         // Convert file to Data URL for Tesseract.js
         const fileEntry = filePath as any;
@@ -374,14 +376,14 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
           }, reject);
         });
         this.imageUrl = fileData;
-        console.log('Image selected for OCR:', this.imageUrl); //Debug log
+        console.log('Image selected for OCR:', this.imageUrl); // Debug log
         await this.showInfoToast('SCAN.SUCCESS_IMAGE');
       } else {
         // Handle text-based files
         const fileContent = await this.readFileContent(fileUrl, fileExtension);
         if (fileContent) {
           this.updateEditorText(fileContent);
-          console.log('Text extracted:', this.recognizedText); //Debug log
+          console.log('Text extracted:', this.recognizedText); // Debug log
           await this.showInfoToast('SCAN.SUCCESS_TEXT');
         } else {
           await this.openFile(fileUrl, this.getMimeType(fileExtension));
@@ -409,7 +411,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       await this.showWarningToast('SCAN.UNSUPPORTED_FILE_TYPE');
       return;
     }
-    console.log('Selected file:', file); //Debug log
+    console.log('Selected file:', file); // Debug log
     const fileExtension = this.getFileExtension(file.name);
     if (!fileExtension) {
       await this.showWarningToast('SCAN.UNSUPPORTED_FILE_TYPE');
@@ -424,14 +426,14 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
         reader.readAsDataURL(file);
       });
       this.imageUrl = fileData;
-      console.log('Image selected for OCR:', this.imageUrl); //Debug log
+      console.log('Image selected for OCR:', this.imageUrl); // Debug log
       await this.showInfoToast('SCAN.SUCCESS_IMAGE');
     } else {
       // Handle text-based files
       const fileContent = await this.readWebFileContent(file, fileExtension);
       if (fileContent) {
         this.updateEditorText(fileContent);
-        console.log('Text extracted:', this.recognizedText); //Debug log
+        console.log('Text extracted:', this.recognizedText); // Debug log
         await this.showInfoToast('SCAN.SUCCESS_TEXT');
       } else {
         const fileUrl = URL.createObjectURL(file);
@@ -441,179 +443,179 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-// Read file content (native)
-async readFileContent(fileUrl: string, extension: string): Promise<string | null> {
-  try {
-    console.log('Reading file content for extension:', extension);  //Debug log
-    switch (extension) {
-      case 'pdf':
-        return await this.extractTextFromPDF(fileUrl);
-      case 'txt':
-        return await this.extractTextFromTXT(fileUrl);
-      case 'docx':
-        return await this.extractTextFromDOCX(fileUrl);
-      case 'odt':
-        return await this.extractTextFromODT(fileUrl);
-      default:
-        console.log('Unsupported file extension:', extension);  //Debug log
-        return null;
+  // Read file content (native)
+  async readFileContent(fileUrl: string, extension: string): Promise<string | null> {
+    try {
+      console.log('Reading file content for extension:', extension);  // Debug log
+      switch (extension) {
+        case 'pdf':
+          return await this.extractTextFromPDF(fileUrl);
+        case 'txt':
+          return await this.extractTextFromTXT(fileUrl);
+        case 'docx':
+          return await this.extractTextFromDOCX(fileUrl);
+        case 'odt':
+          return await this.extractTextFromODT(fileUrl);
+        default:
+          console.log('Unsupported file extension:', extension);  // Debug log
+          return null;
+      }
+    } catch (error) {
+      console.error(`Error reading ${extension} file:`, error);
+      await this.showWarningToast('SCAN.ERROR_TEXT');
+      return null;
     }
-  } catch (error) {
-    console.error(`Error reading ${extension} file:`, error);
-    await this.showWarningToast('SCAN.ERROR_TEXT');
-    return null;
   }
-}
 
-// Read file content (web)
-async readWebFileContent(file: File, extension: string): Promise<string | null> {
-  try {
-    switch (extension) {
-      case 'pdf':
-        return await this.extractTextFromPDFWeb(file);
-      case 'txt':
-        return await this.extractTextFromTXTWeb(file);
-      case 'docx':
-        return await this.extractTextFromDOCXWeb(file);
-      case 'odt':
-        return await this.extractTextFromODTWeb(file);
-      default:
-        console.log('Unsupported file extension:', extension);  //Debug log
-        return null;
+  // Read file content (web)
+  async readWebFileContent(file: File, extension: string): Promise<string | null> {
+    try {
+      switch (extension) {
+        case 'pdf':
+          return await this.extractTextFromPDFWeb(file);
+        case 'txt':
+          return await this.extractTextFromTXTWeb(file);
+        case 'docx':
+          return await this.extractTextFromDOCXWeb(file);
+        case 'odt':
+          return await this.extractTextFromODTWeb(file);
+        default:
+          console.log('Unsupported file extension:', extension);  // Debug log
+          return null;
+      }
+    } catch (error) {
+      console.error(`Error reading ${extension} file:`, error);
+      await this.showWarningToast('SCAN.ERROR_TEXT');
+      return null;
     }
-  } catch (error) {
-    console.error(`Error reading ${extension} file:`, error);
-    await this.showWarningToast('SCAN.ERROR_TEXT');
-    return null;
   }
-}
 
-// Extract text from PDF (native)
-async extractTextFromPDF(fileUrl: string): Promise<string> {
-  try {
+  // Extract text from PDF (native)
+  async extractTextFromPDF(fileUrl: string): Promise<string> {
+    try {
+      const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
+      const filePath = this.file.tempDirectory;
+      const entry = await this.fileTransfer.download(fileUrl, filePath + fileName).then((entry) => entry);
+      const arrayBuffer = await this.file.readAsArrayBuffer(filePath, fileName);
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let text = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        text += content.items.map((item: any) => item.str).join(' ') + '\n';
+      }
+      return text;
+    } catch (error) {
+      console.error('Failed to extract text from PDF:', error);
+      await this.showWarningToast('SCAN.ERROR_PDF_PROCESSING');
+      return '';
+    }
+  }
+
+  // Extract text from PDF (web)
+  async extractTextFromPDFWeb(file: File): Promise<string> {
+    try {
+      const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as ArrayBuffer);
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+      });
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let text = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        text += content.items.map((item: any) => item.str).join(' ') + '\n';
+      }
+      return text;
+    } catch (error) {
+      console.error('Failed to extract text from PDF (web):', error);
+      await this.showWarningToast('SCAN.ERROR_PDF_PROCESSING');
+      return '';
+    }
+  }
+
+  // Extract text from TXT (native)
+  async extractTextFromTXT(fileUrl: string): Promise<string> {
+    const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
+    const filePath = fileUrl.substring(0, fileUrl.lastIndexOf('/'));
+    return await this.file.readAsText(filePath, fileName);
+  }
+
+  // Extract text from TXT (web)
+  async extractTextFromTXTWeb(file: File): Promise<string> {
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsText(file);
+    });
+  }
+
+  // Extract text from DOCX (native)
+  async extractTextFromDOCX(fileUrl: string): Promise<string> {
     const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
     const filePath = this.file.tempDirectory;
     const entry = await this.fileTransfer.download(fileUrl, filePath + fileName).then((entry) => entry);
     const arrayBuffer = await this.file.readAsArrayBuffer(filePath, fileName);
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    let text = '';
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      text += content.items.map((item: any) => item.str).join(' ') + '\n';
-    }
-    return text;
-  } catch (error) {
-    console.error('Failed to extract text from PDF:', error);
-    await this.showWarningToast('SCAN.ERROR_PDF_PROCESSING');
-    return '';
+    const result = await mammoth.extractRawText({ arrayBuffer });
+    return result.value;
   }
-}
 
-// Extract text from PDF (web)
-async extractTextFromPDFWeb(file: File): Promise<string> {
-  try {
+  // Extract text from DOCX (web)
+  async extractTextFromDOCXWeb(file: File): Promise<string> {
     const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as ArrayBuffer);
       reader.onerror = reject;
       reader.readAsArrayBuffer(file);
     });
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    let text = '';
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      text += content.items.map((item: any) => item.str).join(' ') + '\n';
-    }
-    return text;
-  } catch (error) {
-    console.error('Failed to extract text from PDF (web):', error);
-    await this.showWarningToast('SCAN.ERROR_PDF_PROCESSING');
-    return '';
+    const result = await mammoth.extractRawText({ arrayBuffer });
+    return result.value;
   }
-}
 
-// Extract text from TXT (native)
-async extractTextFromTXT(fileUrl: string): Promise<string> {
-  const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
-  const filePath = fileUrl.substring(0, fileUrl.lastIndexOf('/'));
-  return await this.file.readAsText(filePath, fileName);
-}
+  // Extract text from ODT (native) - Basic implementation
+  async extractTextFromODT(fileUrl: string): Promise<string> {
+    const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
+    const filePath = this.file.tempDirectory;
+    const entry = await this.fileTransfer.download(fileUrl, filePath + fileName).then((entry) => entry);
+    const arrayBuffer = await this.file.readAsArrayBuffer(filePath, fileName);
+    const zip = await JSZip.loadAsync(arrayBuffer);
+    const contentXml = await zip.file('content.xml')?.async('string');
+    if (!contentXml) throw new Error('No content.xml found in ODT');
+    // Basic text extraction (strip XML tags)
+    const text = contentXml.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+    return text;
+  }
 
-// Extract text from TXT (web)
-async extractTextFromTXTWeb(file: File): Promise<string> {
-  return await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsText(file);
-  });
-}
+  // Extract text from ODT (web) - Basic implementation
+  async extractTextFromODTWeb(file: File): Promise<string> {
+    const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as ArrayBuffer);
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(file);
+    });
+    const zip = await JSZip.loadAsync(arrayBuffer);
+    const contentXml = await zip.file('content.xml')?.async('string');
+    if (!contentXml) throw new Error('No content.xml found in ODT');
+    const text = contentXml.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+    return text;
+  }
 
-// Extract text from DOCX (native)
-async extractTextFromDOCX(fileUrl: string): Promise<string> {
-  const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
-  const filePath = this.file.tempDirectory;
-  const entry = await this.fileTransfer.download(fileUrl, filePath + fileName).then((entry) => entry);
-  const arrayBuffer = await this.file.readAsArrayBuffer(filePath, fileName);
-  const result = await mammoth.extractRawText({ arrayBuffer });
-  return result.value;
-}
-
-// Extract text from DOCX (web)
-async extractTextFromDOCXWeb(file: File): Promise<string> {
-  const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as ArrayBuffer);
-    reader.onerror = reject;
-    reader.readAsArrayBuffer(file);
-  });
-  const result = await mammoth.extractRawText({ arrayBuffer });
-  return result.value;
-}
-
-// Extract text from ODT (native) - Basic implementation
-async extractTextFromODT(fileUrl: string): Promise<string> {
-  const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
-  const filePath = this.file.tempDirectory;
-  const entry = await this.fileTransfer.download(fileUrl, filePath + fileName).then((entry) => entry);
-  const arrayBuffer = await this.file.readAsArrayBuffer(filePath, fileName);
-  const zip = await JSZip.loadAsync(arrayBuffer);
-  const contentXml = await zip.file('content.xml')?.async('string');
-  if (!contentXml) throw new Error('No content.xml found in ODT');
-  // Basic text extraction (strip XML tags)
-  const text = contentXml.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
-  return text;
-}
-
-// Extract text from ODT (web) - Basic implementation
-async extractTextFromODTWeb(file: File): Promise<string> {
-  const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as ArrayBuffer);
-    reader.onerror = reject;
-    reader.readAsArrayBuffer(file);
-  });
-  const zip = await JSZip.loadAsync(arrayBuffer);
-  const contentXml = await zip.file('content.xml')?.async('string');
-  if (!contentXml) throw new Error('No content.xml found in ODT');
-  const text = contentXml.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
-  return text;
-}
-
-// Get MIME type
-getMimeType(extension: string): string {
-  const mimeTypes: { [key: string]: string } = {
-    pdf: 'application/pdf',
-    txt: 'text/plain',
-    doc: 'application/msword',
-    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    odt: 'application/vnd.oasis.opendocument.text',
-    rtf: 'application/rtf',
-  };
-  return mimeTypes[extension] || 'application/octet-stream';
-}
+  // Get MIME type
+  getMimeType(extension: string): string {
+    const mimeTypes: { [key: string]: string } = {
+      pdf: 'application/pdf',
+      txt: 'text/plain',
+      doc: 'application/msword',
+      docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      odt: 'application/vnd.oasis.opendocument.text',
+      rtf: 'application/rtf',
+    };
+    return mimeTypes[extension] || 'application/octet-stream';
+  }
 
   // OCR for images
   async recognizeText() {
@@ -631,7 +633,7 @@ getMimeType(extension: string): string {
     try {
       const result = await this.tesseractWorker.recognize(this.imageUrl);
       this.updateEditorText(result.data.text);
-      console.log('Recognized Text:', this.recognizedText); //Debug log
+      console.log('Recognized Text:', this.recognizedText); // Debug log
       await this.showInfoToast('SCAN.SUCCESS_TEXT');
     } catch (error) {
       console.error('OCR Error:', error);
@@ -648,14 +650,14 @@ getMimeType(extension: string): string {
 
     this.fileTransfer.download(fileUrl, filePath + fileName).then((entry) => {
       this.fileOpener.open(entry.toURL(), mimeType)
-        .then(() => console.log('File is opened')) //Debug log
+        .then(() => console.log('File is opened')) // Debug log
         .catch((error) => console.error('Error opening file:', error));
     }).catch((error) => {
       console.error('Error downloading file:', error);
     });
   }
 
-  // Get file extension 
+  // Get file extension
   getFileExtension(fileUrl: string | undefined | null): string | null {
     return fileUrl ? fileUrl.split('.').pop()?.toLowerCase() || null : null;
   }
@@ -672,43 +674,37 @@ getMimeType(extension: string): string {
 
     if (this.matches.length === 0) {
       await this.showWarningToast('SCAN.NO_PATTERNS_FOUND');
+      return;
     } else {
       await this.showInfoToast('SCAN.PATTERNS_FOUND');
-      this.highlightMatches(); // Initial gray highlights
-      await this.fetchApiResults(); // Fetch API results and update highlights
+      await this.fetchApiResults();
+      this.highlightMatches(); // Highlight with correct colors
     }
   }
 
   private async fetchApiResults() {
-    this.apiResults = [];
     this.isProcessing = true;
-
-    for (const match of this.matches) {
-      if (!match.standardized) continue;
-      let highlightColor = 'gray'; // Default
-      try {
-        const observable = await this.zakonyApiService.getDocHead(match.standardized);
-        const result = await new Promise((resolve, reject) => {
-          observable.subscribe({
-            next: (data) => resolve(data),
-            error: (err) => reject(err),
+    this.apiResults = await Promise.all(this.matches.map(async (match) => {
+      if (match.standardized) {
+        try {
+          const observable = await this.zakonyApiService.getDocHead(match.standardized);
+          const result = await new Promise((resolve, reject) => {
+            observable.subscribe({
+              next: (data) => resolve(data),
+              error: (err) => reject(err),
+            });
           });
-        });
-        highlightColor = this.determineHighlightColor(result);
-        this.apiResults.push({ standardized: match.standardized, result, highlightColor });
-      } catch (error: any) {
-        this.apiResults.push({
-          standardized: match.standardized,
-          error: error.message || 'Failed to fetch data',
-          highlightColor,
-        });
+          const highlightColor = this.determineHighlightColor(result);
+          return { standardized: match.standardized, result, highlightColor };
+        } catch (error: any) {
+          console.warn(`Error fetching API for "${match.standardized}":`, error);
+          return { standardized: match.standardized, error: error.message, highlightColor: 'gray' };
+        }
       }
-    }
-
+      return { standardized: match.standardized || '', highlightColor: 'gray' };
+    }));
     this.isProcessing = false;
     console.log('API results:', this.apiResults);
-    this.highlightMatches(); // Re-highlight based on API results
-    this.cdr.detectChanges();
   }
 
   private determineHighlightColor(result: any): string {
@@ -747,34 +743,59 @@ getMimeType(extension: string): string {
       }
     }
 
-    return 'gray'; // Default for other cases (e.g., future dates, invalid Till)
+    return 'gray'; // Default for other cases
   }
 
   highlightMatches() {
-    if (!this.quillEditor || !this.matches.length) {
-      console.warn('Cannot highlight: Quill editor or matches not available');
+    if (!this.quillEditor || !this.matches.length || !this.apiResults.length) {
+      console.warn('Cannot highlight: Quill editor, matches, or API results not available');
       return;
     }
 
     // Clear existing highlights
-    this.quillEditor.formatText(0, this.recognizedText?.length || 0, { background: false, link: false });
+    this.quillEditor.formatText(0, this.recognizedText?.length || 0, { background: false, link: null });
 
-    // Apply highlights based on apiResults or default to gray
+    // Apply highlights with correct colors and links
     this.matches.forEach(match => {
-      const apiResult = this.apiResults.find(r => r.standardized === match.standardized);
-      const color = apiResult?.highlightColor || 'gray';
-      let collection = 'cs';
-      let document = '';
       if (match.standardized) {
+        const apiResult = this.apiResults.find(r => r.standardized === match.standardized);
+        const highlightColor = apiResult?.highlightColor || 'gray';
         const parsed = this.zakonyApiService.parseStandardizedText(match.standardized);
-        collection = parsed.collection;
-        document = parsed.document;
+        const { collection, document } = parsed;
+        if (document) {
+          this.quillEditor!.formatText(match.start, match.end - match.start, {
+            background: highlightColor,
+            link: `/regulation-detail/${collection}/${document}/${encodeURIComponent(match.standardized)}`
+          });
+        }
       }
-      this.quillEditor!.formatText(match.start, match.end - match.start, {
-        background: color,
-        link: `/document-detail/${collection}/${document}`
-      });
     });
+  }
+  private async handleRegulationClick(url: string) {
+    const match = url.match(/\/regulation-detail\/([^\/]+)\/([^\/]+)\/(.+)/);
+    if (match) {
+      const [, collection, document, standardized] = match;
+      try {
+        this.isProcessing = true;
+        const observable = await this.zakonyApiService.getDocData(collection, document);
+        const result = await new Promise((resolve, reject) => {
+          observable.subscribe({
+            next: (data) => resolve(data),
+            error: (err) => reject(err),
+          });
+        });
+        const highlightColor = this.determineHighlightColor(result);
+        // Navigate to detail page with result data
+        await this.router.navigate([`/document-detail/${collection}/${document}`], {
+          state: { result, highlightColor, standardized: decodeURIComponent(standardized) }
+        });
+      } catch (error) {
+        console.warn(`Failed to fetch API result for "${decodeURIComponent(standardized)}":`, error);
+        await this.showWarningToast('SCAN.ERROR_API');
+      } finally {
+        this.isProcessing = false;
+      }
+    }
   }
 
   // Toasts
