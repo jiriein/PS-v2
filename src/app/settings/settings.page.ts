@@ -13,7 +13,6 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 
 export class SettingsPage implements OnInit {
   settingsForm: FormGroup;
-  apiKey: string = '';
   showApiKey: boolean = false;
 
   constructor(private formBuilder: FormBuilder, private translate: TranslateService, private storage: Storage) {
@@ -22,22 +21,22 @@ export class SettingsPage implements OnInit {
       language: ['cz'],
       fontSize: ['medium'],
       customFontSize: [''],
+      apiKey: ['']
     });
 
     this.loadSettings();
   }
 
   async ngOnInit() {
-    // Load the saved API key on component initialization
-    const { value } = await Preferences.get({ key: 'apiKey' });
-    this.apiKey = value || 'test'; // Default to 'test' if no key is saved
-
     this.settingsForm.get('customFontSize')?.valueChanges.subscribe((value) => {
       document.body.style.fontSize = `${value || 16}px`;
       this.storage.set('customFontSize', value);
     });
     this.settingsForm.get('theme')?.valueChanges.subscribe((isDark) => {
       document.body.classList.toggle('dark-theme', isDark);
+    });
+    this.settingsForm.get('apiKey')?.valueChanges.subscribe((value) => {
+      this.storage.set('apiKey', value);
     });
   }
 
@@ -46,8 +45,9 @@ export class SettingsPage implements OnInit {
     const language = await this.storage.get('language') || 'cz';
     const fontSize = await this.storage.get('fontSize') || 'medium';
     const customFontSize = await this.storage.get('customFontSize') || '';
+    const apiKey = await this.storage.get('apiKey') || 'test'; // Default to 'test'
 
-    this.settingsForm.patchValue({ theme: theme === 'dark', language, fontSize, customFontSize });
+    this.settingsForm.patchValue({ theme: theme === 'dark', language, fontSize, customFontSize, apiKey });
   }
 
   // Handle Theme Change
@@ -87,13 +87,6 @@ export class SettingsPage implements OnInit {
     }
   }
 
-  // Handle API Key Change
-  async onApiKeyChange() {
-    await Preferences.set({
-      key: 'apiKey',
-      value: this.apiKey,
-    });
-  }
   // Handle API key visibility
   toggleApiKeyVisibility() {
     this.showApiKey = !this.showApiKey;

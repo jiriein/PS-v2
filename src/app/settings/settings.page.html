@@ -44,16 +44,19 @@
         <ion-input type="number" placeholder="Enter size in px" slot="end"></ion-input>
       </ion-item>
       -->
-      
+    </form>
+  </ion-content>
+
+  <ion-content>
+    <form>
       <!-- API Key Input -->
       <ion-item>
-        <ion-label position="floating">{{'API_KEY' | translate}}</ion-label>
+        <ion-label>{{'API_KEY' | translate}}</ion-label>
         <ion-input
-          [(ngModel)]="apiKey"
+          formControlName="apiKey"
           name="apiKey"
           [type]="showApiKey ? 'text' : 'password'"
-          [readonly]="!showApiKey"
-          (ionChange)="onApiKeyChange()"
+          [disabled]="!showApiKey"
           placeholder="Enter API Key"
         ></ion-input>
         <ion-button slot="end" fill="clear" (click)="toggleApiKeyVisibility()">
