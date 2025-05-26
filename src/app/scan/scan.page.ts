@@ -90,11 +90,14 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
         this.setEditorContent(this.recognizedText);
       }
 
-      // Add toolbar link handler
-      const toolbar = this.quillEditor.getModule('toolbar') as QuillToolbar;
-      toolbar.addHandler('link', (value: string) => {
-        if (value && this.quillEditor) {
-          this.handleRegulationClick(value);
+      // Add click event listener to intercept link clicks
+      this.quillEditor.root.addEventListener('click', (event: Event) => {
+        const target = event.target as HTMLElement;
+        if (target.tagName === 'A' && target.getAttribute('href')) {
+          event.preventDefault(); // Prevent default navigation
+          const href = target.getAttribute('href')!;
+          console.log('Link clicked:', href); // Debug log
+          this.handleRegulationClick(href);
         }
       });
 
@@ -765,18 +768,25 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
         if (document) {
           this.quillEditor!.formatText(match.start, match.end - match.start, {
             background: highlightColor,
-            link: `/regulation-detail/${collection}/${document}/${encodeURIComponent(match.standardized)}`
+            link: `/document-detail/${collection}/${document}`
           });
         }
       }
     });
   }
   private async handleRegulationClick(url: string) {
-    const match = url.match(/\/regulation-detail\/([^\/]+)\/([^\/]+)\/(.+)/);
+    const match = url.match(/\/document-detail\/([^\/]+)\/([^\/]+)/);
     if (match) {
-      const [, collection, document, standardized] = match;
+      const [, collection, document] = match;
+      // Find the standardized value from matches
+      const standardizedMatch = this.matches.find(m => {
+        const parsed = this.zakonyApiService.parseStandardizedText(m.standardized || '');
+        return parsed.collection === collection && parsed.document === document;
+      });
+      const standardized = standardizedMatch?.standardized || '';
       try {
         this.isProcessing = true;
+        console.log('Fetching document data for:', { collection, document }); // Debug log
         const observable = await this.zakonyApiService.getDocData(collection, document);
         const result = await new Promise((resolve, reject) => {
           observable.subscribe({
@@ -785,16 +795,21 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
           });
         });
         const highlightColor = this.determineHighlightColor(result);
+        console.log('API result before navigation:', result); // Detailed log
+         console.log('Navigating to document detail with data:', { result, highlightColor, standardized }); // Debug log
         // Navigate to detail page with result data
         await this.router.navigate([`/document-detail/${collection}/${document}`], {
-          state: { result, highlightColor, standardized: decodeURIComponent(standardized) }
+          state: { result, highlightColor, standardized }
         });
       } catch (error) {
-        console.warn(`Failed to fetch API result for "${decodeURIComponent(standardized)}":`, error);
+        console.warn(`Failed to fetch API result for "${standardized}":`, error);
         await this.showWarningToast('SCAN.ERROR_API');
       } finally {
         this.isProcessing = false;
       }
+    } else {
+      console.error('Invalid URL format:', url);
+      await this.showWarningToast('SCAN.INVALID_LINK');
     }
   }
 

@@ -27,8 +27,9 @@ export class DocumentDetailPage implements OnInit {
   ngOnInit() {
     // Get data from router state (passed from scan.page.ts)
     const state = window.history.state;
+    console.log('Raw state from router:', state); // Debug log
     if (state.result) {
-      this.documentData = state.result;
+      this.processApiResponse(state.result);
       this.highlightColor = state.highlightColor || 'gray';
       this.standardized = state.standardized || '';
       this.isLoading = false;
@@ -51,7 +52,8 @@ export class DocumentDetailPage implements OnInit {
       const observable = await this.zakonyApiService.getDocData(collection, document);
       observable.subscribe({
         next: (data) => {
-          this.documentData = data.Result || data;
+          console.log('Raw API response from getDocData:', data); // Debug log
+          this.processApiResponse(data);
           this.isLoading = false;
           console.log('Document data fetched:', this.documentData); // Debug log
         },
@@ -68,6 +70,54 @@ export class DocumentDetailPage implements OnInit {
     }
   }
 
+  private processApiResponse(data: any) {
+    console.log('Processing API response:', data); // Debug log
+    if (data) {
+      const result = data.Result || data; // Fallback to data if Result is missing
+      if (result) {
+        this.documentData = {
+          Title: result.Quote || result.Code || result.Head?.Quote || result.Head?.Code || 'Untitled Document',
+          Quote: result.Quote || result.Head?.Quote || null, // Add Quote field
+          EffectFrom: result.Head?.DeclareDate || result.EffectFrom || '',
+          EffectTill: result.Version?.VersionTill || result.EffectTill || null,
+          Body: {
+            Parts: this.processFragments(result.Fragments || [])
+          }
+        };
+        return;
+      }
+    }
+    this.documentData = null;
+    console.warn('Invalid API response:', data);
+  }
+
+  private processFragments(fragments: any[]): { Title?: string, Sections: { Title?: string, Paragraphs: { Number?: string, Text: string }[] }[] }[] {
+    if (!Array.isArray(fragments)) return [];
+
+    const parts: { Title?: string, Sections: { Title?: string, Paragraphs: { Number?: string, Text: string }[] }[] }[] = [];
+    const paragraphs = fragments
+      .filter(fragment => {
+        const text = fragment.Text || fragment.Content || '';
+        const quote = fragment.Quote || '';
+        return text.trim().length > 0 || quote.trim().length > 0;
+      })
+      .map(fragment => ({
+        Number: fragment.Number || null,
+        Text: fragment.Text || fragment.Content || ''
+      }));
+
+    if (paragraphs.length > 0) {
+      parts.push({
+        Sections: [{
+          Title: fragments[0]?.Title,
+          Paragraphs: paragraphs
+        }]
+      });
+    }
+
+    return parts;
+  }
+
   // Format date (handles /Date(1167606000000+0100)/ format)
   formatDate(dateString: string): string {
     if (!dateString) return '';
@@ -77,11 +127,20 @@ export class DocumentDetailPage implements OnInit {
     return new Date(timestamp).toLocaleDateString('cs-CZ'); // Adjust locale as needed
   }
 
-  // Format content (handles Body with Parts, Sections, Paragraphs)
+  // Format content (display bold Quote followed by Fragments without Numbers)
   formatContent(body: any): string {
-    if (!body || !body.Parts) return this.translate.instant('DOCUMENT_DETAIL.NO_CONTENT');
-    
     let formatted = '';
+
+    // Display bold Quote if available
+    if (this.documentData?.Quote) {
+      formatted += `<p><strong>${this.documentData.Quote}</strong></p>`;
+    }
+
+    // Append Fragments content without Numbers
+    if (!body || !body.Parts || !body.Parts.length) {
+      return '';
+    }
+
     body.Parts.forEach((part: any) => {
       if (part.Title) {
         formatted += `<h2>${part.Title}</h2>`;
@@ -93,13 +152,35 @@ export class DocumentDetailPage implements OnInit {
           }
           if (section.Paragraphs && Array.isArray(section.Paragraphs)) {
             section.Paragraphs.forEach((paragraph: any) => {
-              formatted += `<p><strong>§ ${paragraph.Number}</strong> ${paragraph.Text}</p>`;
+              const text = paragraph.Text || '';
+              formatted += `<p>${text}</p>`;
             });
           }
         });
       }
     });
+
     return formatted;
+  }
+
+  // Transform standardized prefix to full name
+  getFullName(standardized: string): string {
+    const prefixMap: { [key: string]: string } = {
+      'n.v. c.': 'Nařízení vlády číslo',
+      'v. c.': 'Vyhláška číslo',
+      'z. c.': 'Zákon číslo',
+      's. c.': 'Sdělení číslo'
+    };
+
+    // Extract prefix (part before the first space or number)
+    const prefixMatch = standardized.match(/^(\w+\.\s*\w+\.\s*c\.)/i);
+    const prefix = prefixMatch ? prefixMatch[0].trim() : '';
+    const fullPrefix = prefixMap[prefix] || prefix;
+
+    // Extract the remaining part (after the prefix)
+    const remainder = standardized.replace(prefix, '').trim() || '';
+
+    return `${fullPrefix} ${remainder}`.trim() || standardized;
   }
 
   async showWarningToast(messageKey: string) {
