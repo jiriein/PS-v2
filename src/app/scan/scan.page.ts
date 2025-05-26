@@ -687,7 +687,13 @@ getMimeType(extension: string): string {
       if (!match.standardized) continue;
       let highlightColor = 'gray'; // Default
       try {
-        const result = await this.zakonyApiService.getDocHead(match.standardized).toPromise();
+        const observable = await this.zakonyApiService.getDocHead(match.standardized);
+        const result = await new Promise((resolve, reject) => {
+          observable.subscribe({
+            next: (data) => resolve(data),
+            error: (err) => reject(err),
+          });
+        });
         highlightColor = this.determineHighlightColor(result);
         this.apiResults.push({ standardized: match.standardized, result, highlightColor });
       } catch (error: any) {

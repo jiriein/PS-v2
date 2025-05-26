@@ -1,4 +1,5 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Preferences } from '@capacitor/preferences';
 import { catchError, map } from 'rxjs/operators';
 import { Observable, throwError } from 'rxjs';
 import { Injectable } from '@angular/core';
@@ -27,20 +28,29 @@ interface ApiResponse {
 export class ZakonyApiService {
   //private readonly baseUrl = 'https://www.zakonyprolidi.cz/api/v1/data.json';
   private readonly baseUrl = '/api/api/v1/data.json'; // Proxy path
-  private readonly apiKey = 'test'; // Replace with your actual API key
 
   constructor(private http: HttpClient) {}
+
+  /**
+   * Gets the API key from Preferences
+   * @returns Promise resolving to the API key
+   */
+  private async getApiKey(): Promise<string> {
+    const { value } = await Preferences.get({ key: 'apiKey' });
+    return value || 'test'; // Default to 'test' if no key is saved
+  }
 
   /**
    * Fetches document metadata using the DocHead method.
    * @param standardized Standardized regulation text (e.g., "n.v. c. 123/2020 sb.")
    * @returns Observable with the API response
   */
-  getDocHead(standardized: string): Observable<any> {
+  async getDocHead(standardized: string): Promise<Observable<any>> {
     const { collection, document } = this.parseStandardizedText(standardized);
+    const apiKey = await this.getApiKey();
     const url = `${this.baseUrl}/DocHead`;
     const params = {
-      apikey: this.apiKey,
+      apikey: apiKey,
       Collection: collection,
       Document: document,
     };
@@ -57,10 +67,11 @@ export class ZakonyApiService {
    * @param document Document identifier (e.g., "2006-262")
    * @returns Observable with the API response
   */
-getDocData(collection: string, document: string): Observable<any> {
+async getDocData(collection: string, document: string): Promise<Observable<any>> {
+  const apiKey = await this.getApiKey();
   const url = `${this.baseUrl}/DocData`;
   const params = {
-    apikey: this.apiKey,
+    apikey: apiKey,
     Collection: collection,
     Document: document,
   };

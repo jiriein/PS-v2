@@ -24,6 +24,7 @@
     "SETTINGS": "Settings",
     "EMAIL": "Email",
     "PASSWORD": "Password",
+    "API_KEY": "API Key",
     "CUSTOM_FONT_SIZE": "Custom Font Size",
     "UNSUPPORTED_FILE_TYPE": "Unsupported file type",
     "IMAGE_CAPTURED_SUCCESSFULLY": "Image captured successfully",

@@ -33,20 +33,27 @@ export class DocumentDetailPage implements OnInit {
     }
   }
 
-  private fetchDocumentData(collection: string, document: string) {
+  private async fetchDocumentData(collection: string, document: string) {
     this.isLoading = true;
-    this.zakonyApiService.getDocData(collection, document).subscribe({
-      next: (data) => {
-        this.documentData = data.Result || data;
-        this.isLoading = false;
-        console.log('Document data:', this.documentData); // Debug log
-      },
-      error: (error) => {
-        this.isLoading = false;
-        console.error('Error fetching document data:', error);
-        this.showWarningToast('DOCUMENT_DETAIL.ERROR_FETCH');
-      }
-    });
+    try {
+      const observable = await this.zakonyApiService.getDocData(collection, document);
+      observable.subscribe({
+        next: (data) => {
+          this.documentData = data.Result || data;
+          this.isLoading = false;
+          console.log('Document data:', this.documentData); // Debug log
+        },
+        error: (error) => {
+          this.isLoading = false;
+          console.error('Error fetching document data:', error);
+          this.showWarningToast('DOCUMENT_DETAIL.ERROR_FETCH');
+        }
+      });
+    } catch (error) {
+      this.isLoading = false;
+      console.error('Error fetching document data:', error);
+      this.showWarningToast('DOCUMENT_DETAIL.ERROR_FETCH');
+    }
   }
 
   // Format date (handles /Date(1167606000000+0100)/ format)

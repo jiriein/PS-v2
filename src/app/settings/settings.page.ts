@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Storage } from '@ionic/storage-angular';
+import { Preferences } from '@capacitor/preferences';
 import { TranslateService } from '@ngx-translate/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 
@@ -10,8 +11,10 @@ import { FormBuilder, FormGroup } from '@angular/forms';
   standalone: false
 })
 
-export class SettingsPage {
+export class SettingsPage implements OnInit {
   settingsForm: FormGroup;
+  apiKey: string = '';
+  showApiKey: boolean = false;
 
   constructor(private formBuilder: FormBuilder, private translate: TranslateService, private storage: Storage) {
     this.settingsForm = this.formBuilder.group({
@@ -24,7 +27,11 @@ export class SettingsPage {
     this.loadSettings();
   }
 
-  ngOnInit() {
+  async ngOnInit() {
+    // Load the saved API key on component initialization
+    const { value } = await Preferences.get({ key: 'apiKey' });
+    this.apiKey = value || 'test'; // Default to 'test' if no key is saved
+
     this.settingsForm.get('customFontSize')?.valueChanges.subscribe((value) => {
       document.body.style.fontSize = `${value || 16}px`;
       this.storage.set('customFontSize', value);
@@ -80,4 +87,15 @@ export class SettingsPage {
     }
   }
 
+  // Handle API Key Change
+  async onApiKeyChange() {
+    await Preferences.set({
+      key: 'apiKey',
+      value: this.apiKey,
+    });
+  }
+  // Handle API key visibility
+  toggleApiKeyVisibility() {
+    this.showApiKey = !this.showApiKey;
+  }
 }

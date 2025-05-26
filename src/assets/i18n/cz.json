@@ -24,6 +24,7 @@
     "SETTINGS": "Nastavení",
     "EMAIL": "E-mail",
     "PASSWORD": "Heslo",
+    "API_KEY": "API Klíč",
     "CUSTOM_FONT_SIZE": "Vlastní velikost fontu",
     "UNSUPPORTED_FILE_TYPE": "Tento typ souboru není podporován",
     "IMAGE_CAPTURED_SUCCESSFULLY": "Scan úspěšně pořízen",
