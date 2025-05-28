@@ -127,14 +127,15 @@ export class DocumentDetailPage implements OnInit {
     return new Date(timestamp).toLocaleDateString('cs-CZ'); // Adjust locale as needed
   }
 
+  // Helper method to strip hyperlinks from text
+  private stripHyperlinks(text: string): string {
+    // Remove <a> tags and keep inner text (e.g., <a href="...">Link</a> becomes Link)
+    return text.replace(/<a\s+[^>]*href="[^"]*"[^>]*>(.*?)<\/a>/gi, '$1');
+  }
+
   // Format content (display bold Quote followed by Fragments without Numbers)
   formatContent(body: any): string {
     let formatted = '';
-
-    // Display bold Quote if available
-    if (this.documentData?.Quote) {
-      formatted += `<p><strong>${this.documentData.Quote}</strong></p>`;
-    }
 
     // Append Fragments content without Numbers
     if (!body || !body.Parts || !body.Parts.length) {
@@ -143,17 +144,20 @@ export class DocumentDetailPage implements OnInit {
 
     body.Parts.forEach((part: any) => {
       if (part.Title) {
-        formatted += `<h2>${part.Title}</h2>`;
+        const titleText = this.stripHyperlinks(part.Title);
+        formatted += `<h2><${titleText}</h2>`;
       }
       if (part.Sections && Array.isArray(part.Sections)) {
         part.Sections.forEach((section: any) => {
           if (section.Title) {
-            formatted += `<h3>${section.Title}</h3>`;
+            const sectionTitleText = this.stripHyperlinks(section.Title);
+            formatted += `<h3>${sectionTitleText}</h3>`;
           }
           if (section.Paragraphs && Array.isArray(section.Paragraphs)) {
             section.Paragraphs.forEach((paragraph: any) => {
               const text = paragraph.Text || '';
-              formatted += `<p>${text}</p>`;
+              const strippedText = this.stripHyperlinks(text);
+              formatted += `<p>${strippedText}</p>`;
             });
           }
         });
@@ -163,24 +167,15 @@ export class DocumentDetailPage implements OnInit {
     return formatted;
   }
 
-  // Transform standardized prefix to full name
-  getFullName(standardized: string): string {
-    const prefixMap: { [key: string]: string } = {
-      'n.v. c.': 'Nařízení vlády číslo',
-      'v. c.': 'Vyhláška číslo',
-      'z. c.': 'Zákon číslo',
-      's. c.': 'Sdělení číslo'
-    };
-
-    // Extract prefix (part before the first space or number)
+  // Transform standardized text to law number
+  getName(standardized: string): string {
     const prefixMatch = standardized.match(/^(\w+\.\s*\w+\.\s*c\.)/i);
     const prefix = prefixMatch ? prefixMatch[0].trim() : '';
-    const fullPrefix = prefixMap[prefix] || prefix;
-
-    // Extract the remaining part (after the prefix)
+    
+    // Extract the number part
     const remainder = standardized.replace(prefix, '').trim() || '';
 
-    return `${fullPrefix} ${remainder}`.trim() || standardized;
+    return `${remainder}`.trim();
   }
 
   async showWarningToast(messageKey: string) {
