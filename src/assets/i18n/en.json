@@ -57,6 +57,8 @@
     "SCAN.UNSUPPORTED_FILE_TYPE": "Unsupported file type",
     "SCAN.DOC_NOT_SUPPORTED_WEB": "DOC files are not supported in the browser. Please use a mobile device or convert to DOCX.",
 
+    "SCAN.ERROR_API": "Legal norm not found",
+
     "SCAN.FIND_PATTERNS": "Find Patterns",
     "SCAN.NO_PATTERNS_FOUND": "No patterns found",
     "SCAN.PATTERNS_FOUND": "Patterns found",

@@ -169,13 +169,10 @@ export class DocumentDetailPage implements OnInit {
 
   // Transform standardized text to law number
   getName(standardized: string): string {
-    const prefixMatch = standardized.match(/^(\w+\.\s*\w+\.\s*c\.)/i);
-    const prefix = prefixMatch ? prefixMatch[0].trim() : '';
-    
-    // Extract the number part
-    const remainder = standardized.replace(prefix, '').trim() || '';
-
-    return `${remainder}`.trim();
+    const match = standardized.match(/^(n\.v\.|z\.|v\.)\s*c\.\s*(\d{2,4}\/\d{2,4})\s*sb\.$/i);
+    const numberPart = match ? match[2] : standardized.trim();
+    console.log(`AAAAAAAAAA prefix: ${match ? match[1] : ''}, numberPart: ${numberPart}`);
+    return numberPart;
   }
 
   async showWarningToast(messageKey: string) {
