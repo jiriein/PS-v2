@@ -187,10 +187,19 @@ html.dark-theme ion-item ion-label ion-input , body.dark-theme ion-item ion-labe
     border: 1px solid #e6ad00;
     border-radius: 5px;
     margin: 10px;
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.5s ease, transform 3s ease;
+    visibility: visible;
 }
 
 .warning-banner.dark-theme {
     color: black;
+}
+
+.warning-banner.hidden {
+    opacity: 0;
+    visibility: hidden;
 }
 
 /* Toasts */

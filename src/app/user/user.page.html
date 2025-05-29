@@ -10,7 +10,7 @@
   </ion-header>
 
   <ion-content>
-    <div class="warning-banner">{{'FUNCTIONS.NOT_IMPLEMENTED' | translate}}</div>
+    <div class="warning-banner" [ngClass]="{'hidden': !showWarningBanner}">{{'FUNCTIONS.NOT_IMPLEMENTED' | translate}}</div>
 
     <form (ngSubmit)="onLogin()">
       <ion-item>

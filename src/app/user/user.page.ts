@@ -8,8 +8,9 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
   styleUrls: ['./user.page.scss'],
   standalone: false
 })
-export class UserPage{
+export class UserPage {
   loginForm: FormGroup;
+  showWarningBanner: boolean = true;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -21,19 +22,11 @@ export class UserPage{
     });
   }
 
-  async onLogin() {
-    if (this.loginForm.valid) {
-      const { email, password } = this.loginForm.value;
-      // Handle login logic here (API call)
-      console.log('Login successful with:', email, password);
-
-      // Show success message
-      const alert = await this.alertController.create({
-        header: 'Login Successful',
-        message: `Welcome, ${email}!`,
-        buttons: ['OK']
-      });
-      await alert.present();
-    }
+  onLogin() {
+      // Perform login logic here
+      this.showWarningBanner = false;
+      setTimeout(() => {
+        this.showWarningBanner = true;
+      }, 300);
   }
 }
