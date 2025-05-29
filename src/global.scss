@@ -71,6 +71,7 @@ header h1 {
 
 ion-item {
     --border-style: none;
+    --color: var(--ion-text-color);
 }
 
 body, ion-content, ion-label, ion-input, ion-button, ion-item-divider {
@@ -81,12 +82,13 @@ body, ion-content, ion-label, ion-input, ion-button, ion-item-divider {
 
 ion-input {
     flex: 1;
+    --color: var(--ion-text-color);
     --background: var(--ion-toolbar-background); 
 }
 
 
 button, ion-button {
-    --background: #15679c !important; 
+    --background: #15679c; 
     color: white;
     padding: 10px 20px;
     border: none;
@@ -96,7 +98,7 @@ button, ion-button {
 }
 
 button:hover, ion-button:hover {
-    --background: #105b85 !important;
+    --background: #105b85;
 }
 
 .logo {
@@ -126,7 +128,7 @@ button:hover, ion-button:hover {
 html, body {
     background-color: #d6edf7;
     --ion-background-color: #d6edf7;
-    --ion-text-color: black;
+
     color: black;
 }
 
@@ -164,10 +166,15 @@ html.dark-theme ion-toolbar, body.dark-theme ion-toolbar {
 
 html.dark-theme ion-item, body.dark-theme ion-item {
     --ion-item-background: #1e7ab2;
+    --color: var(--ion-text-color);
 }
 
 html.dark-theme ion-input, body.dark-theme ion-input {
-    --background: #1e7ab2;
+    --color: var(--ion-text-color);
+}
+
+html.dark-theme ion-item ion-label ion-input , body.dark-theme ion-item ion-label ion-input  {
+    --color: var(--ion-text-color);
 }
 
 /* Warning Banner */

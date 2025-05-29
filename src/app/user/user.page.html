@@ -30,7 +30,7 @@
         <small *ngIf="loginForm.get('password')?.errors?.['required']">Password is required.</small>
       </ion-text>
   
-      <ion-button expand="block" type="submit" [disabled]="loginForm.invalid">{{'LOGIN' | translate}}</ion-button>
+      <ion-button expand="block" type="submit">{{'LOGIN' | translate}}</ion-button>
     </form>
   </ion-content>
 </div>
