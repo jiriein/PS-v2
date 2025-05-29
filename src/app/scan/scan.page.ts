@@ -693,6 +693,34 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  async navigateToDetail(match: { text: string, start: number, end: number, standardized?: string }) {
+    if (!match.standardized) return;
+
+    const parsed = this.zakonyApiService.parseStandardizedText(match.standardized);
+    const { collection, document } = parsed;
+
+    if (collection && document) {
+      try {
+        const observable = await this.zakonyApiService.getDocData(collection, document);
+        const result = await new Promise((resolve, reject) => {
+          observable.subscribe({
+            next: (data) => resolve(data),
+            error: (err) => reject(err),
+          });
+        });
+
+        const numberMatch = match.standardized.match(/(\d{1,4}\/\d{2,4})/);
+        const lawNumber = numberMatch ? numberMatch[1] : match.standardized;
+
+        await this.router.navigate([`/document-detail/${collection}/${document}`], {
+          state: { result, lawNumber }
+        });
+      } catch (error) {
+        console.warn(`Failed to fetch API result for "${match.standardized}":`, error);
+      }
+    }
+  }
+
   // Helper to normalize year based on digit count and value
   private normalizeYear(standardized: string): string {
     const slashIndex = standardized.indexOf('/');

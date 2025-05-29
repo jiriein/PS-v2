@@ -129,6 +129,11 @@ button:hover, ion-button:hover {
     .ql-toolbar {
         border-bottom: 1px solid #ccc;
     }
+
+    a, a:link, a:visited, a:hover, a:focus, a:active {
+        color: var(--ion-text-color) !important;
+        --color: var(--ion-text-color) !important;
+    }
 }
 
 /* Light Theme (Default) */

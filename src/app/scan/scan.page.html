@@ -83,6 +83,15 @@
         {{ 'SCAN.SAVE_TEXT' | translate }}
       </ion-button>
     </div>
+    
+    <!-- Display Matches as Clickable Links -->
+    <ion-list class="ion-padding-top-bottom" *ngIf="matches && matches.length > 0">
+      <ion-item *ngFor="let match of matches" (click)="navigateToDetail(match)" class="custom-link">
+        <ion-label>
+          <h2>{{ match.text }}</h2>
+        </ion-label>
+      </ion-item>
+    </ion-list>
 
   </ion-content>
 </div>

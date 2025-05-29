@@ -1,38 +1,40 @@
 .scan-section {
-    padding: 16px;
+  padding: 16px;
+}
+
+.error {
+  color: red;
+  font-style: italic;
+}
+
+ion-list {
+  margin-top: 8px;
+}
+
+ion-item {
+  --padding-start: 16px;
+  --padding-end: 16px;
+}
+
+ion-spinner {
+  display: block;
+  margin: 16px auto;
+}
+
+// New styling for custom links
+.custom-link {
+  --ion-text-color: var(--ion-color-step-50);
+  --ion-item-color: var(--ion-color-step-50);
+
+  &:hover,
+  &:focus,
+  &:active {
+    --background: transparent;
+    --ion-text-color: var(--ion-color-step-50);
+    --color: var(--ion-color-step-50);
   }
-  
-  .quill-editor {
-    .ql-container {
-      .ql-editor {
-        [style*="background: gray"] {
-          background-color: #d3d3d3 !important; /* Light gray */
-        }
-        [style*="background: green"] {
-          background-color: #90ee90 !important; /* Light green */
-        }
-        [style*="background: red"] {
-          background-color: #ffcccb !important; /* Light red */
-        }
-      }
-    }
+
+  ion-label h2 {
+    color: var(--ion-text-color);
   }
-  
-  .error {
-    color: red;
-    font-style: italic;
-  }
-  
-  ion-list {
-    margin-top: 8px;
-  }
-  
-  ion-item {
-    --padding-start: 16px;
-    --padding-end: 16px;
-  }
-  
-  ion-spinner {
-    display: block;
-    margin: 16px auto;
-  }
+}
