@@ -25,40 +25,26 @@
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
-
-/* @import "@ionic/angular/css/palettes/dark.always.css"; */
-/* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import "@ionic/angular/css/palettes/dark.system.css";
-
-
 /* Quill Editor */
 @import '~quill/dist/quill.core.css';
 @import '~quill/dist/quill.snow.css';
 
 /* COLORS
-
 #15679c dark blue
 #d6edf7 light blue
 #105b85 btn-hoover etc
-
+#b3d9e8 derived light blue (darker shade of #d6edf7 for toolbar in light mode)
+#1e7ab2 derived dark blue (lighter shade of #15679c for toolbar in dark mode)
 */
-
 
 /* General Styles */
 body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-  }
+}
 
-  
-  header {
+header {
     background-color: #15679c;
     padding: 10px 20px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -66,141 +52,158 @@ body {
     justify-content: left;
     align-items: center;
     height: 67px;
-  }
-  
-  header h1 {
+}
+
+header h1 {
     margin: 0;
     color: #d6edf7;
     font-size: 2rem;
-  }
-  
-  /* Container for Content */
-  .container {
+}
+
+/* Container for Content */
+.container {
     padding: 10px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
     height: 100%;
-  }
+}
 
-  ion-item {
+ion-item {
     --border-style: none;
-  }
+}
 
-  body, ion-content, ion-label, ion-input, ion-button,ion-item-divider {
+body, ion-content, ion-label, ion-input, ion-button, ion-item-divider {
     font-size: var(--app-font-size);
     border: none;
-  }
+    color: var(--ion-text-color);
+}
 
-  ion-input {
+ion-input {
     flex: 1;
-  }
+    --background: var(--ion-toolbar-background); 
+}
 
-  button, ion-button {
-    --background: #15679c;
-    color: #d6edf7;
+
+button, ion-button {
+    --background: #15679c !important; 
+    color: white;
     padding: 10px 20px;
     border: none;
     border-radius: 5px;
     font-size: 1rem;
     cursor: pointer;
-  }
-  
-  button:hover, ion-button:hover {
-    --background: #105b85;
-  }
+}
 
-  .logo {
+button:hover, ion-button:hover {
+    --background: #105b85 !important;
+}
+
+.logo {
     height: 3em;
     margin-right: 10px;
     vertical-align: middle;
-  }
+}
 
-  .quill-editor {
+.quill-editor {
     min-height: 200px;
     max-height: 400px;
     overflow-y: auto;
     border: 1px solid #ccc;
     border-radius: 4px;
-  
+
     .ql-container {
-      font-size: 16px;
+        font-size: 16px;
+        color: var(--ion-text-color) !important;
     }
-  
+
     .ql-toolbar {
-      border-bottom: 1px solid #ccc;
+        border-bottom: 1px solid #ccc;
     }
-  }
-
-/* Light Theme */
-
-html:not([class="ion-color-dark"]) ion-content, ion-item-divider {
-  --ion-background-color: #15669c3d;
-  --ion-item-background: #15669c3d;
 }
 
-body {
-  background-color: #d6edf7;
-  --ion-content-background-color: #15679c;
-  --ion-toolbar-background: #15669c37;
-  --ion-toolbar-color: black;
-  --ion-item-background: #15669c37;
-  --ion-text-color: black;
-  color: black;
+/* Light Theme (Default) */
+html, body {
+    background-color: #d6edf7;
+    --ion-background-color: #d6edf7;
+    --ion-text-color: black;
+    color: black;
 }
 
-
-/* Dark Theme */  
-
-body.dark-theme {
-  background-color: #15679c;
-  --ion-content-background-color: #15679c;
-  --ion-toolbar-background: #d6edf7b2;
-  --ion-toolbar-color: #d6edf7;
-  --ion-item-background: #d6edf7d3;
-  --ion-text-color: #d6edf7;
-  color: #d6edf7;
+ion-content {
+    --background: #b3d9e8;
+    --ion-background-color: #d6edf7;
 }
 
-html.dark-theme, ion-content.dark-theme, ion-item-divider.dark-theme {
-  --ion-background-color: #15669c3d;
-  --ion-item-background: #15669c3d;
+ion-toolbar {
+    --background: #b3d9e8;
+    --color: black;
 }
 
+ion-item {
+    --ion-item-background: #d6edf7;
+}
+
+/* Dark Theme */
+html.dark-theme, body.dark-theme {
+    background-color: #15679c;
+    --ion-background-color: #15679c;
+    --ion-text-color: white;
+    color: white;
+}
+
+html.dark-theme ion-content, body.dark-theme ion-content {
+    --background: #1e7ab2;
+    --ion-background-color: #15679c;
+}
+
+html.dark-theme ion-toolbar, body.dark-theme ion-toolbar {
+    --background: #1e7ab2;
+    --color: white;
+}
+
+html.dark-theme ion-item, body.dark-theme ion-item {
+    --ion-item-background: #1e7ab2;
+}
+
+html.dark-theme ion-input, body.dark-theme ion-input {
+    --background: #1e7ab2;
+}
 
 /* Warning Banner */
 .warning-banner {
-  background-color: #ffcc00;
-  color: white;
-  padding: 30px;
-  text-align: center;
-  font-weight: bold;
-  border: 1px solid #e6ad00;
-  border-radius: 5px;
-  margin: 10px;
+    background-color: #ffcc00;
+    color: white;
+    padding: 30px;
+    text-align: center;
+    font-weight: bold;
+    border: 1px solid #e6ad00;
+    border-radius: 5px;
+    margin: 10px;
 }
 
 .warning-banner.dark-theme {
-  color: black;
+    color: black;
 }
 
+/* Toasts */
 .warning-toast {
-  --background: #aa0000;
-  color: #ffffff;
-  text-align: center;
-  font-weight: bold;
-  padding: 10px;
-  border: 1px solid #9e0202;
-  border-radius: 5px;
-  margin: 10px;
+    --background: #aa0000;
+    color: white;
+    text-align: center;
+    font-weight: bold;
+    padding: 10px;
+    border: 1px solid #9e0202;
+    border-radius: 5px;
+    margin: 10px;
 }
 
 .info-toast {
-  --background: #15679c;
-  color: #d6edf7;
-  text-align: center;
-  padding: 10px;
-  border: 1px solid #105b85;
-  border-radius: 5px;
-  margin: 10px;
+    --background: #15679c;
+    color: #d6edf7;
+    text-align: center;
+    padding: 10px;
+    border: 1px solid #105b85;
+    border-radius: 5px;
+    margin: 10px;
 }
