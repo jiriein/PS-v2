@@ -71,7 +71,7 @@ header h1 {
 
 ion-item {
     --border-style: none;
-    --color: var(--ion-text-color);
+     --color: var(--ion-text-color) !important
 }
 
 body, ion-content, ion-label, ion-input, ion-button, ion-item-divider {
@@ -82,7 +82,6 @@ body, ion-content, ion-label, ion-input, ion-button, ion-item-divider {
 
 ion-input {
     flex: 1;
-    --color: var(--ion-text-color);
     --background: var(--ion-toolbar-background); 
 }
 
@@ -114,9 +113,17 @@ button:hover, ion-button:hover {
     border: 1px solid #ccc;
     border-radius: 4px;
 
-    .ql-container {
+    ion-content & .ql-container,
+    ion-item & .ql-container {
         font-size: 16px;
         color: var(--ion-text-color) !important;
+        --color: var(--ion-text-color) !important;
+    }
+
+    ion-content & .ql-container .ql-editor,
+    ion-item & .ql-container .ql-editor {
+        color: var(--ion-text-color) !important;
+        --color: var(--ion-text-color) !important;
     }
 
     .ql-toolbar {
@@ -128,7 +135,7 @@ button:hover, ion-button:hover {
 html, body {
     background-color: #d6edf7;
     --ion-background-color: #d6edf7;
-
+    --ion-text-color: black;
     color: black;
 }
 
@@ -166,15 +173,18 @@ html.dark-theme ion-toolbar, body.dark-theme ion-toolbar {
 
 html.dark-theme ion-item, body.dark-theme ion-item {
     --ion-item-background: #1e7ab2;
-    --color: var(--ion-text-color);
 }
 
 html.dark-theme ion-input, body.dark-theme ion-input {
-    --color: var(--ion-text-color);
+    --background: #1e7ab2;
+}
+
+html.dark-theme ion-card-title, body.dark-theme ion-card-title {
+    color: white;
 }
 
 html.dark-theme ion-item ion-label ion-input , body.dark-theme ion-item ion-label ion-input  {
-    --color: var(--ion-text-color);
+    --color: black;
 }
 
 /* Warning Banner */

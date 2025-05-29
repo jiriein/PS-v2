@@ -63,6 +63,9 @@
     "SCAN.NO_PATTERNS_FOUND": "No patterns found",
     "SCAN.PATTERNS_FOUND": "Patterns found",
 
+    "FIND.ENTER_LAW": "Enter law number.",
+    "FIND.ONLY_ONE_LAW": "You can search for only one law at a time.",
+
     "DOCUMENT_DETAIL.TITLE": "Document detail",
     "DOCUMENT_DETAIL.EFFECT_FROM": "Effect From",
     "DOCUMENT_DETAIL.EFFECT_TILL": "Effect Till",

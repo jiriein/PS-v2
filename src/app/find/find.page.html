@@ -10,28 +10,25 @@
   </ion-header>
 
   <ion-content>
-    <div class="warning-banner">{{ 'FUNCTIONS.NOT_IMPLEMENTED' | translate }}</div>
-    
+    <!-- Warning Banner for Not Implemented
+    <div class="warning-banner">{{ 'FUNCTIONS.NOT_IMPLEMENTED' | translate }}</div>-->
+
     <!-- Search Bar -->
-     <!-- 
     <ion-item>
-      <ion-input placeholder="Enter law name or number..." [(ngModel)]="lawId"></ion-input>
-      <ion-button (click)="onSearch()">{{'FIND' | translate}}</ion-button>
+      <ion-input placeholder="{{ 'FIND.ENTER_LAW' | translate }}" [(ngModel)]="text" (ionInput)="onInputChange()"></ion-input>
+      <ion-button (click)="onSearch()">{{ 'FIND' | translate }}</ion-button>
     </ion-item>
-    -->
+
     <!-- Divider between search and results -->
-    <ion-item-divider></ion-item-divider>
-  
+    <ion-item-divider style="background: #b3d9e8;"></ion-item-divider>
+
     <!-- Search Results -->
-     <!--
-    <ion-list class="ion-padding-top-bottom">
-      <ion-item *ngFor="let law of lawData">
+    <ion-list class="ion-padding-top-bottom" *ngIf="matches.length > 0">
+      <ion-item *ngFor="let match of matches" (click)="navigateToDetail(match)">
         <ion-label>
-          <h2>{{ law.name }}</h2>
-          <p>{{ law.number }}</p>
+          <h2>{{ match.text }}</h2>
         </ion-label>
       </ion-item>
     </ion-list>
-    -->
   </ion-content>
 </div>

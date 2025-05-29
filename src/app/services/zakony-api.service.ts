@@ -91,31 +91,17 @@ export class ZakonyApiService {
 
   /**
    * Parses standardized text into Collection and Document parameters.
-   * @param standardized Standardized text (e.g., "n.v. c. 123/2020 sb.")
+   * @param standardized Standardized text
    * @returns Object with collection and document
   */
   public parseStandardizedText(standardized: string): { collection: string; document: string } {
-    const match = standardized.match(/^(n\.v\.|z\.|v\.)\s*c\.\s*(\d{2,4}\/\d{2,4})\s*sb\.$/i);
+    const match = standardized.match(/(?:(n\.v\.|z\.|v\.)\s*)?(?:c\.\s*)?(\d{2,4}\/\d{2,4})(?:\s*sb\.)?/i);
     if (!match) {
       console.warn(`Invalid standardized format: "${standardized}"`);
       throw new Error('Invalid standardized format');
     }
-
-    const prefix = match[1]; // e.g., "n.v.", "z.", "v."
-    const number = match[2]; // e.g., "123/2020"
-
-    // Map prefix to Collection
-    let collection: string;
-    switch (prefix.toLowerCase()) {
-      case 'n.v.': // nařízení vlády
-      case 'z.': // zákon
-      case 'v.': // vyhláška
-        collection = 'cs';
-        break;
-      default:
-        collection = 'cs';
-    }
-
+    const number = match[2];
+    const collection = 'cs';
     // Format Document as "YYYY-NNN" (e.g., "123/2020" -> "2020-123")
     const [num, year] = number.split('/');
     const document = `${year}-${num}`;

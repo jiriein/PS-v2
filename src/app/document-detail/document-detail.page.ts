@@ -3,7 +3,6 @@ import { ActivatedRoute } from '@angular/router';
 import { ZakonyApiService } from '../services/zakony-api.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ToastController } from '@ionic/angular';
-import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-document-detail',
@@ -15,7 +14,7 @@ export class DocumentDetailPage implements OnInit {
   documentData: any = null;
   isLoading: boolean = false;
   highlightColor: string = 'gray';
-  standardized: string = '';
+  lawNumber: string = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -31,9 +30,12 @@ export class DocumentDetailPage implements OnInit {
     if (state.result) {
       this.processApiResponse(state.result);
       this.highlightColor = state.highlightColor || 'gray';
-      this.standardized = state.standardized || '';
+      this.lawNumber = state.standardized || '';
+      if (this.lawNumber) {
+        this.fetchRegulationMetadata(this.lawNumber);
+      }
       this.isLoading = false;
-      console.log('Using state data:', { documentData: this.documentData, highlightColor: this.highlightColor, standardized: this.standardized });
+      console.log('Using state data:', { documentData: this.documentData, highlightColor: this.highlightColor, standardized: this.lawNumber });
     } else {
       // Fallback: Fetch data if no state (e.g., page refresh)
       const collection = this.route.snapshot.paramMap.get('collection') || 'cs';
@@ -54,6 +56,11 @@ export class DocumentDetailPage implements OnInit {
         next: (data) => {
           console.log('Raw API response from getDocData:', data); // Debug log
           this.processApiResponse(data);
+          const standardized = this.getStandardizedFromDocument(document);
+          if (standardized) {
+            this.lawNumber = standardized;
+            this.fetchRegulationMetadata(standardized);
+          }
           this.isLoading = false;
           console.log('Document data fetched:', this.documentData); // Debug log
         },
@@ -70,6 +77,43 @@ export class DocumentDetailPage implements OnInit {
     }
   }
 
+  private async fetchRegulationMetadata(standardized: string) {
+    try {
+      const observable = await this.zakonyApiService.getDocHead(standardized);
+      observable.subscribe({
+        next: (data) => {
+          console.log('Raw API response from getDocHead:', data); // Debug log
+          if (data) {
+            const regulation = data.Result || data;
+            if (regulation) {
+              this.documentData = {
+                ...this.documentData,
+                EffectFrom: regulation.EffectFrom || regulation.DeclareDate || this.documentData.EffectFrom,
+                EffectTill: regulation.EffectTill || regulation.VersionTill || this.documentData.EffectTill
+              };
+              console.log('Updated document data with regulation dates:', this.documentData);
+            }
+          }
+        },
+        error: (error) => {
+          console.error('Error fetching regulation metadata:', error);
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching regulation metadata:', error);
+    }
+  }
+  
+// Helper to construct standardized format from document
+  private getStandardizedFromDocument(document: string): string {
+    const parts = document.split('-');
+    if (parts.length === 2) {
+      const [year, number] = parts;
+      return `z. c. ${number}/${year} sb.`.toLowerCase();
+    }
+    return '';
+  }
+
   private processApiResponse(data: any) {
     console.log('Processing API response:', data); // Debug log
     if (data) {
@@ -77,7 +121,7 @@ export class DocumentDetailPage implements OnInit {
       if (result) {
         this.documentData = {
           Title: result.Quote || result.Code || result.Head?.Quote || result.Head?.Code || 'Untitled Document',
-          Quote: result.Quote || result.Head?.Quote || null, // Add Quote field
+          Quote: result.Quote || result.Head?.Quote || null,
           EffectFrom: result.Head?.DeclareDate || result.EffectFrom || '',
           EffectTill: result.Version?.VersionTill || result.EffectTill || null,
           Body: {
@@ -145,7 +189,7 @@ export class DocumentDetailPage implements OnInit {
     body.Parts.forEach((part: any) => {
       if (part.Title) {
         const titleText = this.stripHyperlinks(part.Title);
-        formatted += `<h2><${titleText}</h2>`;
+        formatted += `<h2>${titleText}</h2>`;
       }
       if (part.Sections && Array.isArray(part.Sections)) {
         part.Sections.forEach((section: any) => {
@@ -167,11 +211,11 @@ export class DocumentDetailPage implements OnInit {
     return formatted;
   }
 
-  // Transform standardized text to law number
-  getName(standardized: string): string {
-    const match = standardized.match(/^(n\.v\.|z\.|v\.)\s*c\.\s*(\d{2,4}\/\d{2,4})\s*sb\.$/i);
-    const numberPart = match ? match[2] : standardized.trim();
-    console.log(`AAAAAAAAAA prefix: ${match ? match[1] : ''}, numberPart: ${numberPart}`);
+  // Transform standardized text or lawNumber to just the law number
+  getName(text: string): string {
+    const match = text.match(/(\d{1,4}\/\d{2,4})/);
+    const numberPart = match ? match[1] : text.trim();
+    console.log(`Extracted numberPart: ${numberPart}`);
     return numberPart;
   }
 

@@ -63,6 +63,9 @@
     "SCAN.NO_PATTERNS_FOUND": "Žádné vzory regulací nebyly nalezeny",
     "SCAN.PATTERNS_FOUND": "Vzory regulací byly nalezeny",
 
+    "FIND.ENTER_LAW": "Zadejte číslo zákona.",
+    "FIND.ONLY_ONE_LAW": "Najednou lze vyhledat pouze jeden zákon.",
+
     "DOCUMENT_DETAIL.TITLE": "Detail dokumentu",
     "DOCUMENT_DETAIL.EFFECT_FROM": "Účinnost od",
     "DOCUMENT_DETAIL.EFFECT_TILL": "Účinnost do",

@@ -62,7 +62,6 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     (pdfjsLib as any).GlobalWorkerOptions.workerSrc = this.getWorkerSrc();
   }
 
-
   ngAfterViewInit() {
     console.log('ngAfterViewInit - Editor element:', this.editorElement); // Debug log
     this.initializeQuillEditor();
@@ -679,10 +678,37 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       await this.showWarningToast('SCAN.NO_PATTERNS_FOUND');
       return;
     } else {
+      // Normalize standardized strings in matches before proceeding
+      this.matches = this.matches.map(match => {
+        if (match.standardized) {
+          const normalizedStandardized = this.normalizeYear(match.standardized);
+          return { ...match, standardized: normalizedStandardized };
+        }
+        return match;
+      });
+      console.log('Matches after normalization:', this.matches); // Debug log
       await this.showInfoToast('SCAN.PATTERNS_FOUND');
       await this.fetchApiResults();
       this.highlightMatches(); // Highlight with correct colors
     }
+  }
+
+  // Helper to normalize year based on digit count and value
+  private normalizeYear(standardized: string): string {
+    const slashIndex = standardized.indexOf('/');
+    if (slashIndex === -1) return standardized;
+    const yearPart = standardized.substring(slashIndex + 1).split(' ')[0];
+    const year = parseInt(yearPart, 10);
+    if (yearPart.length === 4) {
+      return standardized.toLowerCase();
+    } else if (yearPart.length === 2) {
+      // Normalize 2-digit year to 4-digit
+      const prefix = standardized.substring(0, slashIndex + 1);
+      const suffix = standardized.substring(slashIndex + 1 + yearPart.length).toLowerCase();
+      const newYear = year > 70 ? `19${year}` : `20${year}`;
+      return `${prefix}${newYear}${suffix}`.toLowerCase();
+    }
+    return standardized.toLowerCase();
   }
 
   private async fetchApiResults() {
@@ -796,7 +822,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
         });
         const highlightColor = this.determineHighlightColor(result);
         console.log('API result before navigation:', result); // Detailed log
-         console.log('Navigating to document detail with data:', { result, highlightColor, standardized }); // Debug log
+        console.log('Navigating to document detail with data:', { result, highlightColor, standardized }); // Debug log
         // Navigate to detail page with result data
         await this.router.navigate([`/document-detail/${collection}/${document}`], {
           state: { result, highlightColor, standardized }

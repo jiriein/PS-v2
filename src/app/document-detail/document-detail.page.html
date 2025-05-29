@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/tabs/scan"></ion-back-button>
     </ion-buttons>
-    <ion-title>{{ getName(standardized) }}</ion-title>
+    <ion-title>{{ getName(lawNumber) }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
@@ -18,13 +18,13 @@
         <ion-item lines="none">
           <ion-label>
             <h3>{{ 'DOCUMENT_DETAIL.EFFECT_FROM' | translate }}</h3>
-            <p>{{ formatDate(documentData.EffectFrom) }}</p>
+            <p style="color: var(--ion-text-color) !important;">{{ formatDate(documentData.EffectFrom) }}</p>
           </ion-label>
         </ion-item>
         <ion-item lines="none" *ngIf="documentData.EffectTill">
           <ion-label>
             <h3>{{ 'DOCUMENT_DETAIL.EFFECT_TILL' | translate }}</h3>
-            <p>{{ formatDate(documentData.EffectTill) }}</p>
+            <p style="color: var(--ion-text-color) !important;">{{ formatDate(documentData.EffectTill) }}</p>
           </ion-label>
         </ion-item>
       </ion-card-content>
@@ -36,7 +36,7 @@
         <ion-card-title>{{ 'DOCUMENT_DETAIL.CONTENT' | translate }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
-        <div class="document-content" [innerHTML]="formatContent(documentData.Body)"></div>
+        <div class="document-content" style="color: var(--ion-text-color) !important;" [innerHTML]="formatContent(documentData.Body)"></div>
       </ion-card-content>
     </ion-card>
   </div>
