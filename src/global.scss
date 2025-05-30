@@ -134,6 +134,14 @@ button:hover, ion-button:hover {
         color: var(--ion-text-color) !important;
         --color: var(--ion-text-color) !important;
     }
+    
+    .ql-snow .ql-picker-label:hover, .ql-snow .ql-stroke:hover, .ql-snow .ql-fill:hover,
+    .ql-snow .ql-picker-label:focus,.ql-snow .ql-stroke:focus, .ql-snow .ql-fill:focus,
+    .ql-snow .ql-picker-label:active, .ql-snow .ql-stroke:active, .ql-snow .ql-fill:active,
+    .ql-snow .ql-picker-label, .ql-snow .ql-stroke, .ql-snow .ql-fill {
+    fill: var(--ion-text-color) !important;
+    color: var(--ion-text-color) !important;
+    }
 }
 
 /* Light Theme (Default) */
@@ -191,6 +199,8 @@ html.dark-theme ion-card-title, body.dark-theme ion-card-title {
 html.dark-theme ion-item ion-label ion-input , body.dark-theme ion-item ion-label ion-input  {
     --color: black;
 }
+
+
 
 /* Warning Banner */
 .warning-banner {
