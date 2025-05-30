@@ -9,8 +9,6 @@
     </ion-toolbar>
   </ion-header>
 
-  <!--<div class="warning-banner">{{ 'FUNCTIONS.NOT_IMPLEMENTED' | translate }}</div>-->
-
   <ion-content>
     <!-- Camera scan section - Only available on native platforms -->
     <div class="scan-section" *ngIf="isNative">
@@ -68,9 +66,6 @@
 
     <!-- Display and edit text -->
     <ion-card [hidden]="!recognizedText && !imageUrl">
-      <ion-card-header>
-        <ion-card-title>{{ 'SCAN.RECOGNIZED_TEXT' | translate }}</ion-card-title>
-      </ion-card-header>
       <ion-card-content><div #editor class="quill-editor" style="color: var(--ion-text-color) !important;"></div></ion-card-content>
     </ion-card>
 
@@ -92,6 +87,5 @@
         </ion-label>
       </ion-item>
     </ion-list>
-
   </ion-content>
 </div>
