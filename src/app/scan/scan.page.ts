@@ -17,7 +17,7 @@ import { saveAs } from 'file-saver';
 import * as mammoth from 'mammoth';
 import * as JSZip from 'jszip';
 
-// Define interface for Quill toolbar module
+
 interface QuillToolbar {
   addHandler(event: string, callback: (value: string) => void): void;
 }
@@ -31,15 +31,16 @@ interface QuillToolbar {
 
 export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
   isNative: boolean = Capacitor.getPlatform() !== 'web';
-  imageUrl: string | undefined; // Store image Data URL for display and OCR
-  isProcessing: boolean = false; // Track OCR processing state
-  private tesseractWorker: Worker | undefined; // Tesseract.js worker
+  imageUrl: string | undefined;
+  isProcessing: boolean = false;
+  private tesseractWorker: Worker | undefined;
   @ViewChild('editor', { static: false }) editorElement!: ElementRef;
   quillEditor: Quill | undefined;
   recognizedText: string | undefined = '';
   matches: { text: string; start: number; end: number; standardized?: string }[] = [];
   apiResults: { standardized: string; result?: any; error?: string; highlightColor?: string }[] = [];
-
+  highlightMode: 'full' | 'number' = 'full';
+  
   constructor(
     private fileChooser: FileChooser,
     private actionSheetCtrl: ActionSheetController,
@@ -67,41 +68,44 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     if (this.editorElement && this.editorElement.nativeElement) {
       const toolbarOptions = [
         ['bold', 'italic', 'underline'],
-        [{ 'background': [] }], // Highlighting
-        ['link'], // Hyperlink
-        ['clean'] // Remove formatting
+        [{ 'background': [] }],
+        ['link'],
+        ['clean'],
+        [{ 'header': [1, 2, 3, false] }], // Optional: Add headers
+        ['toggle-highlight'] // Custom button for toggle
       ];
       this.quillEditor = new Quill(this.editorElement.nativeElement, {
         theme: 'snow',
-        modules: { toolbar: toolbarOptions },
+        modules: {
+          toolbar: {
+            container: toolbarOptions,
+            handlers: {
+              'toggle-highlight': () => this.toggleHighlightMode()
+            }
+          }
+        },
         placeholder: this.translate.instant('SCAN.EDIT_TEXT')
       } as QuillOptions);
-
-      // Set initial text if recognizedText exists
       if (this.recognizedText) {
         this.setEditorContent(this.recognizedText);
       }
-
-      // Add click event listener to intercept link clicks
       this.quillEditor.root.addEventListener('click', (event: Event) => {
         const target = event.target as HTMLElement;
         if (target.tagName === 'A' && target.getAttribute('href')) {
-          event.preventDefault(); // Prevent default navigation
+          event.preventDefault();
           const href = target.getAttribute('href')!;
           console.log('Link clicked:', href); // Debug log
           this.handleRegulationClick(href);
         }
       });
-
-      // Update recognizedText when editor content changes
       this.quillEditor.on('text-change', () => {
-        // Update recognizedText as plain text
         const delta = (this.quillEditor as Quill).getContents();
         this.recognizedText = delta.ops
           .filter(op => typeof op.insert === 'string')
           .map(op => op.insert)
           .join('')
           .trim();
+          this.updateHighlights();
       });
       console.log('Quill editor initialized:', this.quillEditor); // Debug log
     } else {
@@ -112,14 +116,10 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
   // Helper method to set editor content, handling plain text or HTML
   private setEditorContent(text: string) {
     if (!this.quillEditor) return;
-
-    // Check if the text is HTML by looking for common tags
     const isHtml = /<[a-z][\s\S]*>/i.test(text);
     if (isHtml) {
-      // If HTML, use pasteHTML to render it correctly
       (this.quillEditor as Quill).clipboard.dangerouslyPasteHTML(text);
     } else {
-      // If plain text, convert to Delta format with line breaks
       const lines = text.split(/\r?\n/).filter(line => line.trim());
       const delta = lines.map(line => ({ insert: line + '\n' }));
       console.log('setEditorContent delta:', delta); // Debug log
@@ -127,7 +127,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  // Update text from editor (optional, for manual updates)
+  // Update text from editor
   updateText() {
     if (this.quillEditor) {
       this.recognizedText = this.quillEditor.root.innerHTML;
@@ -145,6 +145,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
         this.setEditorContent(text);
       }
     }
+    this.updateHighlights();
     this.cdr.detectChanges();
   }
 
@@ -154,18 +155,10 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       await this.showWarningToast('SCAN.NO_TEXT');
       return;
     }
-
     const fileName = `recognized-text-${Date.now()}.docx`;
-
     try {
-      // Create a new DOCX document
       const doc = new Document({
-        sections: [
-          {
-            properties: {},
-            children: this.parseHtmlToDocx((this.quillEditor as Quill).root.innerHTML)
-          }
-        ]
+        sections: [{ properties: {}, children: this.parseHtmlToDocx((this.quillEditor as Quill).root.innerHTML)}]
       });
 
       // Generate the DOCX file as a blob
@@ -205,12 +198,10 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
     const paragraphs: Paragraph[] = [];
-
-    // Process each paragraph (<p>) or other elements
+    // Process each paragraph or other elements
     const elements = doc.querySelectorAll('p, div, span');
     elements.forEach((element) => {
       const textRuns: TextRun[] = [];
-
       // Process text nodes and inline formatting
       const processNode = (node: Node) => {
         if (node.nodeType === Node.TEXT_NODE) {
@@ -221,8 +212,6 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
         } else if (node.nodeType === Node.ELEMENT_NODE) {
           const el = node as HTMLElement;
           const runProps: any = { text: el.textContent || '' };
-
-          // Apply basic formatting
           if (el.tagName === 'B' || el.tagName === 'STRONG') {
             runProps.bold = true;
           }
@@ -233,27 +222,21 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
             runProps.underline = true;
           }
           if (el.style.backgroundColor) {
-            // Note: docx library has limited support for background color
             console.log('Background color detected, not fully supported in DOCX'); // Debug log
           }
           if (el.tagName === 'A') {
-            runProps.text = `${el.textContent} (${el.getAttribute('href')})`; // Include link as text
+            runProps.text = `${el.textContent} (${el.getAttribute('href')})`;
           }
-
           if (runProps.text.trim()) {
             textRuns.push(new TextRun(runProps));
           }
         }
       };
-
-      // Recursively process child nodes
       element.childNodes.forEach(processNode);
-
       if (textRuns.length > 0) {
         paragraphs.push(new Paragraph({ children: textRuns }));
       }
     });
-
     return paragraphs.length > 0 ? paragraphs : [new Paragraph({ children: [new TextRun({ text: 'No content' })] })];
   }
 
@@ -291,7 +274,6 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
 
   async ngOnInit() {
     try {
-      // Initialize Tesseract worker for Czech
       this.tesseractWorker = await createWorker('ces', 1, {
         logger: (m) => console.log(m) // Debug log
       });
@@ -303,7 +285,6 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
   }
 
   async ngOnDestroy() {
-    // Terminate Tesseract worker to free resources
     if (this.tesseractWorker) {
       await this.tesseractWorker.terminate();
     }
@@ -314,9 +295,9 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     if (!this.isNative) return;
     try {
       const image = await Camera.getPhoto({
-        quality: 95, // Adjust the quality if too slow processing
+        quality: 100,
         allowEditing: false,
-        resultType: CameraResultType.DataUrl, // DataUrl for Tesseract.js
+        resultType: CameraResultType.DataUrl,
         source: CameraSource.Camera
       });
       this.imageUrl = image.dataUrl;
@@ -333,9 +314,9 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     if (!this.isNative) return;
     try {
       const image = await Camera.getPhoto({
-        quality: 90, // Adjust the quality if too slow processing
+        quality: 100,
         allowEditing: false,
-        resultType: CameraResultType.DataUrl, // DataUrl for Tesseract.js
+        resultType: CameraResultType.DataUrl,
         source: CameraSource.Photos
       });
       this.imageUrl = image.dataUrl;
@@ -365,15 +346,12 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     try {
       const uri = await this.fileChooser.open();
       console.log('Selected file URI:', uri); // Debug log
-
       const fileExtension = this.getFileExtension(uri);
       console.log('Selected file extension:', fileExtension); // Debug log
-
       if (!fileExtension) {
         await this.showWarningToast('SCAN.UNSUPPORTED_FILE_TYPE');
         return;
       }
-
       if (['png', 'jpg', 'jpeg'].includes(fileExtension)) {
         const fileData = await Filesystem.readFile({
           path: uri,
@@ -417,7 +395,6 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
     if (['png', 'jpg', 'jpeg'].includes(fileExtension)) {
-      // Convert File to Data URL for Tesseract.js
       const fileData = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result as string);
@@ -428,7 +405,6 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       console.log('Image selected for OCR:', this.imageUrl); // Debug log
       await this.showInfoToast('SCAN.SUCCESS_IMAGE');
     } else {
-      // Handle text-based files
       const fileContent = await this.readWebFileContent(file, fileExtension);
         this.updateEditorText(fileContent || 'Failed to extract text from the file.');
         console.log('Text extracted:', this.recognizedText); // Debug log
@@ -441,14 +417,10 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     try {
       console.log('Reading file content for extension:', extension);  // Debug log
       switch (extension) {
-        case 'pdf':
-          return await this.extractTextFromPDF(fileUrl);
-        case 'txt':
-          return await this.extractTextFromTXT(fileUrl);
-        case 'docx':
-          return await this.extractTextFromDOCX(fileUrl);
-        case 'odt':
-          return await this.extractTextFromODT(fileUrl);
+        case 'pdf': return await this.extractTextFromPDF(fileUrl);
+        case 'txt': return await this.extractTextFromTXT(fileUrl);
+        case 'docx': return await this.extractTextFromDOCX(fileUrl);
+        case 'odt': return await this.extractTextFromODT(fileUrl);
         default:
           console.log('Unsupported file extension:', extension);  // Debug log
           return 'Unsupported file type.';
@@ -464,14 +436,10 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
   async readWebFileContent(file: File, extension: string): Promise<string> {
     try {
       switch (extension) {
-        case 'pdf':
-          return await this.extractTextFromPDFWeb(file);
-        case 'txt':
-          return await this.extractTextFromTXTWeb(file);
-        case 'docx':
-          return await this.extractTextFromDOCXWeb(file);
-        case 'odt':
-          return await this.extractTextFromODTWeb(file);
+        case 'pdf': return await this.extractTextFromPDFWeb(file);
+        case 'txt': return await this.extractTextFromTXTWeb(file);
+        case 'docx': return await this.extractTextFromDOCXWeb(file);
+        case 'odt': return await this.extractTextFromODTWeb(file);
         default:
           console.log('Unsupported file extension:', extension);  // Debug log
           return 'Unsupported file type.';
@@ -488,22 +456,16 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     try {
       const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1) || `pdf-${Date.now()}.pdf`;
       const targetPath = `${Directory.Temporary}/${fileName}`;
-
-      // Copy file to temporary directory
       await Filesystem.copy({
         from: fileUrl,
         to: fileName,
         toDirectory: Directory.Temporary
       });
-
-      // Read file
       const result = await Filesystem.readFile({
         path: fileName,
         directory: Directory.Temporary
       });
       const arrayBuffer = this.base64ToArrayBuffer(result.data as string);
-
-      // Process PDF
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       let text = '';
       for (let i = 1; i <= pdf.numPages; i++) {
@@ -612,19 +574,16 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     try {
       const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1) || `odt-${Date.now()}.odt`;
       const targetPath = `${Directory.Temporary}/${fileName}`;
-
       await Filesystem.copy({
         from: fileUrl,
         to: fileName,
         toDirectory: Directory.Temporary
       });
-
       const result = await Filesystem.readFile({
         path: fileName,
         directory: Directory.Temporary
       });
       const arrayBuffer = this.base64ToArrayBuffer(result.data as string);
-
       const zip = await JSZip.loadAsync(arrayBuffer);
       const contentXml = await zip.file('content.xml')?.async('string');
       if (!contentXml) throw new Error('No content.xml found in ODT');
@@ -680,7 +639,6 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       console.error('Tesseract worker not initialized');
       return;
     }
-
     this.isProcessing = true;
     try {
       const result = await this.tesseractWorker.recognize(this.imageUrl);
@@ -700,13 +658,11 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     try {
       const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1) || `file-${Date.now()}`;
       const targetPath = `${Directory.Documents}/${fileName}`;
-
       await Filesystem.copy({
         from: fileUrl,
         to: fileName,
         toDirectory: Directory.Documents
       });
-
       const fileUri = await Filesystem.getUri({
         path: fileName,
         directory: Directory.Documents
@@ -747,10 +703,10 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       await this.showWarningToast('SCAN.NO_TEXT');
       return;
     }
-
-    this.matches = this.regulationPatternService.findRegulationPatterns(this.recognizedText);
-    console.log('Found matches:', this.matches);
-
+    this.matches = this.highlightMode === 'full'
+      ? this.regulationPatternService.findRegulationPatterns(this.recognizedText)
+      : this.regulationPatternService.findLawNumbers(this.recognizedText);
+    console.log('Found matches:', this.matches); // Debug log
     if (this.matches.length === 0) {
       await this.showWarningToast('SCAN.NO_PATTERNS_FOUND');
       return;
@@ -843,28 +799,19 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
   private determineHighlightColor(result: any): string {
     const effectFrom = result?.EffectFrom;
     const effectTill = result?.EffectTill;
-
     if (!effectFrom) {
       return 'gray';
     }
-
-    // Parse EffectFrom (e.g., "/Date(1167606000000+0100)/")
     const fromMatch = effectFrom.match(/\/Date\((\d+)([+-]\d{4})\)\//);
     if (!fromMatch) {
       return 'gray';
     }
-
     const timestamp = parseInt(fromMatch[1], 10);
     const fromDate = new Date(timestamp);
-
     const currentDate = new Date();
-
-    // Check if regulation is effective
     if (effectTill === null && fromDate <= currentDate) {
       return 'green';
     }
-
-    // Parse EffectTill if present
     if (effectTill) {
       const tillMatch = effectTill.match(/\/Date\((\d+)([+-]\d{4})\)\//);
       if (tillMatch) {
@@ -895,13 +842,31 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
         const parsed = this.zakonyApiService.parseStandardizedText(match.standardized);
         const { collection, document } = parsed;
         if (document) {
-          this.quillEditor!.formatText(match.start, match.end - match.start, {
+          const numberMatch = match.text.match(/(\d{1,4}\/\d{2,4})/);
+          const numberText = numberMatch ? numberMatch[0] : match.text;
+          const startOffset = match.text.indexOf(numberText);
+          const endOffset = startOffset + numberText.length;
+          const adjustedStart = match.start + startOffset;
+          const adjustedEnd = match.start + endOffset;
+          this.quillEditor!.formatText(adjustedStart, adjustedEnd - adjustedStart, {
             background: highlightColor,
-            link: `/document-detail/${collection}/${document}`
+            link: this.highlightMode === 'full' ? `/document-detail/${collection}/${document}` : null
           });
         }
       }
     });
+  }
+
+  private toggleHighlightMode() {
+    this.highlightMode = this.highlightMode === 'full' ? 'number' : 'full';
+    console.log('Highlight mode switched to:', this.highlightMode);
+    this.updateHighlights();
+  }
+  
+  private updateHighlights() {
+    if (this.recognizedText) {
+      this.findRegulationPatterns();
+    }
   }
 
   private async handleRegulationClick(url: string) {
