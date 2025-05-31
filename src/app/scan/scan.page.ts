@@ -1,13 +1,11 @@
-import { Component, OnInit, OnDestroy, Inject, ViewChild, ElementRef, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { ActionSheetController, Platform, ToastController, NavController } from '@ionic/angular';
-import { FileTransfer, FileTransferObject } from '@awesome-cordova-plugins/file-transfer/ngx';
-import { RegulationPatternService } from '../services/regulation-pattern.service';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
-import { File as CordovaFile } from '@awesome-cordova-plugins/file/ngx';
+import { RegulationPatternService } from '../services/regulation-pattern.service';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { FileChooser } from '@awesome-cordova-plugins/file-chooser/ngx';
 import { FileOpener } from '@awesome-cordova-plugins/file-opener/ngx';
 import { ZakonyApiService } from '../services/zakony-api.service';
-import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { TranslateService } from '@ngx-translate/core';
 import { createWorker, Worker } from 'tesseract.js';
@@ -32,7 +30,6 @@ interface QuillToolbar {
 })
 
 export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
-  fileTransfer: FileTransferObject;
   isNative: boolean = Capacitor.getPlatform() !== 'web';
   imageUrl: string | undefined; // Store image Data URL for display and OCR
   isProcessing: boolean = false; // Track OCR processing state
@@ -40,8 +37,8 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('editor', { static: false }) editorElement!: ElementRef;
   quillEditor: Quill | undefined;
   recognizedText: string | undefined = '';
-  matches: { text: string, start: number, end: number, standardized?: string }[] = [];
-  apiResults: { standardized: string, result?: any, error?: string, highlightColor?: string }[] = [];
+  matches: { text: string; start: number; end: number; standardized?: string }[] = [];
+  apiResults: { standardized: string; result?: any; error?: string; highlightColor?: string }[] = [];
 
   constructor(
     private fileChooser: FileChooser,
@@ -50,16 +47,14 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     private translate: TranslateService,
     private platform: Platform,
     private fileOpener: FileOpener,
-    private transfer: FileTransfer,
-    @Inject(CordovaFile) private file: CordovaFile,
     private cdr: ChangeDetectorRef,
     private zakonyApiService: ZakonyApiService,
     private regulationPatternService: RegulationPatternService,
     private navCtrl: NavController,
     private router: Router
   ) {
-    this.fileTransfer = this.transfer.create();
-    (pdfjsLib as any).GlobalWorkerOptions.workerSrc = this.getWorkerSrc();
+    const pdfjsLibTyped = pdfjsLib as typeof pdfjsLib & { GlobalWorkerOptions: { workerSrc: string } };
+    pdfjsLibTyped.GlobalWorkerOptions.workerSrc = this.getWorkerSrc();
   }
 
   ngAfterViewInit() {
@@ -78,9 +73,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       ];
       this.quillEditor = new Quill(this.editorElement.nativeElement, {
         theme: 'snow',
-        modules: {
-          toolbar: toolbarOptions
-        },
+        modules: { toolbar: toolbarOptions },
         placeholder: this.translate.instant('SCAN.EDIT_TEXT')
       } as QuillOptions);
 
@@ -128,9 +121,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     } else {
       // If plain text, convert to Delta format with line breaks
       const lines = text.split(/\r?\n/).filter(line => line.trim());
-      const delta = lines.map(line => ({
-        insert: line + '\n'
-      }));
+      const delta = lines.map(line => ({ insert: line + '\n' }));
       console.log('setEditorContent delta:', delta); // Debug log
       (this.quillEditor as Quill).setContents(delta);
     }
@@ -204,7 +195,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
         await this.showInfoToast('SCAN.SUCCESS_SAVED');
       }
     } catch (error) {
-      console.error('Error saving DOCX file:', error);  // Debug log
+      console.error('Error saving DOCX file:', error); // Debug log
       await this.showWarningToast('SCAN.ERROR_SAVED');
     }
   }
@@ -243,7 +234,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
           }
           if (el.style.backgroundColor) {
             // Note: docx library has limited support for background color
-            console.log('Background color detected, not fully supported in DOCX'); //Debug log
+            console.log('Background color detected, not fully supported in DOCX'); // Debug log
           }
           if (el.tagName === 'A') {
             runProps.text = `${el.textContent} (${el.getAttribute('href')})`; // Include link as text
@@ -277,6 +268,17 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       reader.onerror = reject;
       reader.readAsDataURL(blob);
     });
+  }
+
+    // Helper method to convert base64 to ArrayBuffer
+  private base64ToArrayBuffer(base64: string): ArrayBuffer {
+    const binaryString = atob(base64);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
   }
 
   private getWorkerSrc(): string {
@@ -355,41 +357,36 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
 
   // Native File Picker
   async nativeFilePicker() {
+    const hasPermission = await this.requestStoragePermissions();
+    if (!hasPermission) {
+      await this.showWarningToast('SCAN.NO_STORAGE_PERMISSION');
+      return;
+    }
     try {
       const uri = await this.fileChooser.open();
-      const filePath = await this.file.resolveLocalFilesystemUrl(uri);
-      const fileUrl = filePath.nativeURL;
-      const fileExtension = this.getFileExtension(fileUrl);
+      console.log('Selected file URI:', uri); // Debug log
+
+      const fileExtension = this.getFileExtension(uri);
+      console.log('Selected file extension:', fileExtension); // Debug log
 
       if (!fileExtension) {
         await this.showWarningToast('SCAN.UNSUPPORTED_FILE_TYPE');
         return;
       }
-      console.log('Selected file extension:', fileExtension); // Debug log
+
       if (['png', 'jpg', 'jpeg'].includes(fileExtension)) {
-        // Convert file to Data URL for Tesseract.js
-        const fileEntry = filePath as any;
-        const fileData = await new Promise<string>((resolve, reject) => {
-          fileEntry.file((file: File) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(file as unknown as Blob);
-          }, reject);
+        const fileData = await Filesystem.readFile({
+          path: uri,
+          directory: Directory.External
         });
-        this.imageUrl = fileData;
+        this.imageUrl = `data:image/${fileExtension};base64,${fileData.data}`;
         console.log('Image selected for OCR:', this.imageUrl); // Debug log
         await this.showInfoToast('SCAN.SUCCESS_IMAGE');
       } else {
-        // Handle text-based files
-        const fileContent = await this.readFileContent(fileUrl, fileExtension);
-        if (fileContent) {
-          this.updateEditorText(fileContent);
-          console.log('Text extracted:', this.recognizedText); // Debug log
-          await this.showInfoToast('SCAN.SUCCESS_TEXT');
-        } else {
-          await this.openFile(fileUrl, this.getMimeType(fileExtension));
-        }
+        const fileContent = await this.readFileContent(uri, fileExtension);
+        this.updateEditorText(fileContent || 'Failed to extract text from the file.');
+        console.log('Text extracted:', this.recognizedText); // Debug log
+        await this.showInfoToast('SCAN.SUCCESS_TEXT');
       }
     } catch (error) {
       console.error('Error opening document:', error);
@@ -433,20 +430,14 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     } else {
       // Handle text-based files
       const fileContent = await this.readWebFileContent(file, fileExtension);
-      if (fileContent) {
-        this.updateEditorText(fileContent);
+        this.updateEditorText(fileContent || 'Failed to extract text from the file.');
         console.log('Text extracted:', this.recognizedText); // Debug log
         await this.showInfoToast('SCAN.SUCCESS_TEXT');
-      } else {
-        const fileUrl = URL.createObjectURL(file);
-        await this.openFile(fileUrl, this.getMimeType(fileExtension));
-        await this.showWarningToast('SCAN.UNSUPPORTED_FILE_TYPE');
-      }
     }
   }
 
   // Read file content (native)
-  async readFileContent(fileUrl: string, extension: string): Promise<string | null> {
+  async readFileContent(fileUrl: string, extension: string): Promise<string> {
     try {
       console.log('Reading file content for extension:', extension);  // Debug log
       switch (extension) {
@@ -460,17 +451,17 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
           return await this.extractTextFromODT(fileUrl);
         default:
           console.log('Unsupported file extension:', extension);  // Debug log
-          return null;
+          return 'Unsupported file type.';
       }
     } catch (error) {
       console.error(`Error reading ${extension} file:`, error);
       await this.showWarningToast('SCAN.ERROR_TEXT');
-      return null;
+      return 'Error reading file content.';
     }
   }
 
   // Read file content (web)
-  async readWebFileContent(file: File, extension: string): Promise<string | null> {
+  async readWebFileContent(file: File, extension: string): Promise<string> {
     try {
       switch (extension) {
         case 'pdf':
@@ -483,22 +474,36 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
           return await this.extractTextFromODTWeb(file);
         default:
           console.log('Unsupported file extension:', extension);  // Debug log
-          return null;
+          return 'Unsupported file type.';
       }
     } catch (error) {
       console.error(`Error reading ${extension} file:`, error);
       await this.showWarningToast('SCAN.ERROR_TEXT');
-      return null;
+      return 'Error reading file content.';
     }
   }
 
   // Extract text from PDF (native)
   async extractTextFromPDF(fileUrl: string): Promise<string> {
     try {
-      const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
-      const filePath = this.file.tempDirectory;
-      const entry = await this.fileTransfer.download(fileUrl, filePath + fileName).then((entry) => entry);
-      const arrayBuffer = await this.file.readAsArrayBuffer(filePath, fileName);
+      const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1) || `pdf-${Date.now()}.pdf`;
+      const targetPath = `${Directory.Temporary}/${fileName}`;
+
+      // Copy file to temporary directory
+      await Filesystem.copy({
+        from: fileUrl,
+        to: fileName,
+        toDirectory: Directory.Temporary
+      });
+
+      // Read file
+      const result = await Filesystem.readFile({
+        path: fileName,
+        directory: Directory.Temporary
+      });
+      const arrayBuffer = this.base64ToArrayBuffer(result.data as string);
+
+      // Process PDF
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       let text = '';
       for (let i = 1; i <= pdf.numPages; i++) {
@@ -510,7 +515,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     } catch (error) {
       console.error('Failed to extract text from PDF:', error);
       await this.showWarningToast('SCAN.ERROR_PDF_PROCESSING');
-      return '';
+      return 'Failed to extract text from PDF.';
     }
   }
 
@@ -534,76 +539,121 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     } catch (error) {
       console.error('Failed to extract text from PDF (web):', error);
       await this.showWarningToast('SCAN.ERROR_PDF_PROCESSING');
-      return '';
+      return 'Failed to extract text from PDF.';
     }
   }
 
   // Extract text from TXT (native)
   async extractTextFromTXT(fileUrl: string): Promise<string> {
-    const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
-    const filePath = fileUrl.substring(0, fileUrl.lastIndexOf('/'));
-    return await this.file.readAsText(filePath, fileName);
+    try {
+      const result = await Filesystem.readFile({
+        path: fileUrl,
+        directory: Directory.External,
+        encoding: Encoding.UTF8
+      });
+      return result.data as string;
+    } catch (error) {
+      console.error('Failed to extract text from TXT:', error);
+      return 'Failed to extract text from TXT.';
+    }
   }
 
   // Extract text from TXT (web)
   async extractTextFromTXTWeb(file: File): Promise<string> {
-    return await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsText(file);
-    });
+    try{
+      return await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsText(file);
+      });
+    } catch (error) {
+      console.error('Failed to extract text from TXT (web):', error);
+      return 'Failed to extract text from TXT.';
+
+    }
   }
 
   // Extract text from DOCX (native)
   async extractTextFromDOCX(fileUrl: string): Promise<string> {
-    const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
-    const filePath = this.file.tempDirectory;
-    const entry = await this.fileTransfer.download(fileUrl, filePath + fileName).then((entry) => entry);
-    const arrayBuffer = await this.file.readAsArrayBuffer(filePath, fileName);
-    const result = await mammoth.extractRawText({ arrayBuffer });
-    return result.value;
+    try {
+      const result = await Filesystem.readFile({
+        path: fileUrl,
+        directory: Directory.External
+      });
+      const arrayBuffer = this.base64ToArrayBuffer(result.data as string);
+      const mammothResult = await mammoth.extractRawText({ arrayBuffer });
+      return mammothResult.value;
+    } catch (error) {
+      console.error('Failed to extract text from DOCX:', error);
+      return 'Failed to extract text from DOCX.';
+    }
   }
 
   // Extract text from DOCX (web)
   async extractTextFromDOCXWeb(file: File): Promise<string> {
-    const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as ArrayBuffer);
-      reader.onerror = reject;
-      reader.readAsArrayBuffer(file);
-    });
-    const result = await mammoth.extractRawText({ arrayBuffer });
-    return result.value;
+    try {
+      const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as ArrayBuffer);
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+      });
+      const result = await mammoth.extractRawText({ arrayBuffer });
+      return result.value;
+    } catch (error) {
+      console.error('Failed to extract text from DOCX (web):', error);
+      return 'Failed to extract text from DOCX.';
+    }
   }
 
-  // Extract text from ODT (native) - Basic implementation
+  // Extract text from ODT (native)
   async extractTextFromODT(fileUrl: string): Promise<string> {
-    const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
-    const filePath = this.file.tempDirectory;
-    const entry = await this.fileTransfer.download(fileUrl, filePath + fileName).then((entry) => entry);
-    const arrayBuffer = await this.file.readAsArrayBuffer(filePath, fileName);
-    const zip = await JSZip.loadAsync(arrayBuffer);
-    const contentXml = await zip.file('content.xml')?.async('string');
-    if (!contentXml) throw new Error('No content.xml found in ODT');
-    // Basic text extraction (strip XML tags)
-    const text = contentXml.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
-    return text;
+    try {
+      const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1) || `odt-${Date.now()}.odt`;
+      const targetPath = `${Directory.Temporary}/${fileName}`;
+
+      await Filesystem.copy({
+        from: fileUrl,
+        to: fileName,
+        toDirectory: Directory.Temporary
+      });
+
+      const result = await Filesystem.readFile({
+        path: fileName,
+        directory: Directory.Temporary
+      });
+      const arrayBuffer = this.base64ToArrayBuffer(result.data as string);
+
+      const zip = await JSZip.loadAsync(arrayBuffer);
+      const contentXml = await zip.file('content.xml')?.async('string');
+      if (!contentXml) throw new Error('No content.xml found in ODT');
+      const text = contentXml.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+      return text;
+    } catch (error) {
+      console.error('Failed to extract text from ODT:', error);
+      return 'Failed to extract text from ODT.';
+    }
   }
 
-  // Extract text from ODT (web) - Basic implementation
+  // Extract text from ODT (web)
   async extractTextFromODTWeb(file: File): Promise<string> {
-    const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as ArrayBuffer);
-      reader.onerror = reject;
-      reader.readAsArrayBuffer(file);
-    });
-    const zip = await JSZip.loadAsync(arrayBuffer);
-    const contentXml = await zip.file('content.xml')?.async('string');
-    if (!contentXml) throw new Error('No content.xml found in ODT');
-    const text = contentXml.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
-    return text;
+    try {
+      const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as ArrayBuffer);
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+      });
+      const zip = await JSZip.loadAsync(arrayBuffer);
+      const contentXml = await zip.file('content.xml')?.async('string');
+      if (!contentXml) throw new Error('No content.xml found in ODT');
+      const text = contentXml.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+      return text;
+    } catch (error) {
+      console.error('Failed to extract text from ODT (web):', error);
+      return 'Failed to extract text from ODT.';
+    }
   }
 
   // Get MIME type
@@ -647,21 +697,48 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
 
   // Open file
   async openFile(fileUrl: string, mimeType: string) {
-    const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
-    const filePath = Capacitor.getPlatform() === 'android' ? this.file.externalDataDirectory : this.file.documentsDirectory;
+    try {
+      const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1) || `file-${Date.now()}`;
+      const targetPath = `${Directory.Documents}/${fileName}`;
 
-    this.fileTransfer.download(fileUrl, filePath + fileName).then((entry) => {
-      this.fileOpener.open(entry.toURL(), mimeType)
-        .then(() => console.log('File is opened')) // Debug log
-        .catch((error) => console.error('Error opening file:', error));
-    }).catch((error) => {
-      console.error('Error downloading file:', error);
-    });
+      await Filesystem.copy({
+        from: fileUrl,
+        to: fileName,
+        toDirectory: Directory.Documents
+      });
+
+      const fileUri = await Filesystem.getUri({
+        path: fileName,
+        directory: Directory.Documents
+      });
+
+      await this.fileOpener.open(fileUri.uri, mimeType);
+      console.log('File opened successfully:', fileUri.uri); // Debug log
+    } catch (error: any) {
+      console.error('Error opening file:', error);
+      if (error.message.includes('No Activity found')) {
+        await this.showWarningToast('SCAN.NO_APP_FOUND');
+      } else {
+        await this.showWarningToast('SCAN.ERROR_OPENING_FILE');
+      }
+    }
   }
 
   // Get file extension
   getFileExtension(fileUrl: string | undefined | null): string | null {
     return fileUrl ? fileUrl.split('.').pop()?.toLowerCase() || null : null;
+  }
+
+  // Request storage permissions
+  async requestStoragePermissions() {
+    try {
+      const permission = await Filesystem.requestPermissions();
+      console.log('Storage permission status:', permission);
+      return permission.publicStorage === 'granted';
+    } catch (error) {
+      console.error('Error requesting storage permissions:', error);
+      return false;
+    }
   }
 
   // Find regulation patterns
@@ -678,7 +755,6 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       await this.showWarningToast('SCAN.NO_PATTERNS_FOUND');
       return;
     } else {
-      // Normalize standardized strings in matches before proceeding
       this.matches = this.matches.map(match => {
         if (match.standardized) {
           const normalizedStandardized = this.normalizeYear(match.standardized);
@@ -689,11 +765,11 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       console.log('Matches after normalization:', this.matches); // Debug log
       await this.showInfoToast('SCAN.PATTERNS_FOUND');
       await this.fetchApiResults();
-      this.highlightMatches(); // Highlight with correct colors
+      this.highlightMatches();
     }
   }
 
-  async navigateToDetail(match: { text: string, start: number, end: number, standardized?: string }) {
+  async navigateToDetail(match: { text: string; start: number; end: number; standardized?: string }) {
     if (!match.standardized) return;
 
     const parsed = this.zakonyApiService.parseStandardizedText(match.standardized);
@@ -769,13 +845,13 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     const effectTill = result?.EffectTill;
 
     if (!effectFrom) {
-      return 'gray'; // No valid dates
+      return 'gray';
     }
 
     // Parse EffectFrom (e.g., "/Date(1167606000000+0100)/")
     const fromMatch = effectFrom.match(/\/Date\((\d+)([+-]\d{4})\)\//);
     if (!fromMatch) {
-      return 'gray'; // Invalid date format
+      return 'gray';
     }
 
     const timestamp = parseInt(fromMatch[1], 10);
@@ -785,7 +861,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
 
     // Check if regulation is effective
     if (effectTill === null && fromDate <= currentDate) {
-      return 'green'; // Currently effective
+      return 'green';
     }
 
     // Parse EffectTill if present
@@ -795,12 +871,11 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
         const tillTimestamp = parseInt(tillMatch[1], 10);
         const tillDate = new Date(tillTimestamp);
         if (tillDate < currentDate) {
-          return 'red'; // No longer effective
+          return 'red'; 
         }
       }
     }
-
-    return 'gray'; // Default for other cases
+    return 'gray';
   }
 
   highlightMatches() {
@@ -828,11 +903,11 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       }
     });
   }
+
   private async handleRegulationClick(url: string) {
     const match = url.match(/\/document-detail\/([^\/]+)\/([^\/]+)/);
     if (match) {
       const [, collection, document] = match;
-      // Find the standardized value from matches
       const standardizedMatch = this.matches.find(m => {
         const parsed = this.zakonyApiService.parseStandardizedText(m.standardized || '');
         return parsed.collection === collection && parsed.document === document;
@@ -851,7 +926,6 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
         const highlightColor = this.determineHighlightColor(result);
         console.log('API result before navigation:', result); // Detailed log
         console.log('Navigating to document detail with data:', { result, highlightColor, standardized }); // Debug log
-        // Navigate to detail page with result data
         await this.router.navigate([`/document-detail/${collection}/${document}`], {
           state: { result, highlightColor, standardized }
         });
@@ -871,7 +945,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
   async showWarningToast(messageKey: string) {
     const toast = await this.toastController.create({
       message: this.translate.instant(messageKey),
-      duration: 3000, // Show for 3 seconds
+      duration: 3000,
       position: 'middle',
       cssClass: 'warning-toast',
       color: 'danger'

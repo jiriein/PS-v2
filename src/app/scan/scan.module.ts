@@ -2,22 +2,20 @@ import { NgModule } from '@angular/core';
 import { SharedModule } from '../shared/shared.module';
 import { ScanPageRoutingModule } from './scan-routing.module';
 import { ScanPage } from './scan.page';
-import { File } from '@awesome-cordova-plugins/file/ngx';
 import { FileOpener } from '@awesome-cordova-plugins/file-opener/ngx';
 import { FileChooser } from '@awesome-cordova-plugins/file-chooser/ngx';
-import { FileTransfer } from '@awesome-cordova-plugins/file-transfer/ngx';
+import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
   imports: [
     ScanPageRoutingModule,
-    SharedModule
+    SharedModule,
+    TranslateModule.forChild()
   ],
   declarations: [ScanPage],
   providers: [
-    File,
     FileOpener,
-    FileChooser,
-    FileTransfer
+    FileChooser
   ]
 })
 export class ScanPageModule {}

@@ -55,16 +55,17 @@
     "SCAN.ERROR_SAVED": "Failed to save text to file",
     "SCAN.ERROR_PDF_PROCESSING": "Failed to process PDF file",
     "SCAN.UNSUPPORTED_FILE_TYPE": "Unsupported file type",
-    "SCAN.DOC_NOT_SUPPORTED_WEB": "DOC files are not supported in the browser. Please use a mobile device or convert to DOCX.",
-
+    "SCAN.DOC_NOT_SUPPORTED_WEB": "DOC files are not supported in the web browser. Use a mobile device or convert to DOCX.",
     "SCAN.ERROR_API": "Legal norm not found",
-
-    "SCAN.FIND_PATTERNS": "Find Patterns",
+    "SCAN.FIND_PATTERNS": "Find patterns",
     "SCAN.NO_PATTERNS_FOUND": "No patterns found",
     "SCAN.PATTERNS_FOUND": "Patterns found",
+    "SCAN.NO_STORAGE_PERMISSION": "Failed to get storage permission",
+    "SCAN.NO_APP_FOUND": "No app found to open this file",
+    "SCAN.ERROR_OPENING_FILE": "Failed to open file",
+    "SCAN.INVALID_LINK": "Invalid link",
 
     "FIND.ENTER_LAW": "Enter law number.",
-    "FIND.ONLY_ONE_LAW": "You can search for only one law at a time.",
 
     "DOCUMENT_DETAIL.TITLE": "Document detail",
     "DOCUMENT_DETAIL.EFFECT_FROM": "Effect From",
