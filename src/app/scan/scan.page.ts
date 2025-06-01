@@ -344,7 +344,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     try {
       const uri = await this.fileChooser.open();
       console.log('Selected file URI:', uri); // Debug log
-      const fileExtension = this.getFileExtension(uri);
+      const fileExtension = await this.getFileExtension(uri);
       console.log('Selected file extension:', fileExtension); // Debug log
       if (!fileExtension) {
         await this.showWarningToast('SCAN.UNSUPPORTED_FILE_TYPE');
@@ -387,7 +387,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
     console.log('Selected file:', file); // Debug log
-    const fileExtension = this.getFileExtension(file.name);
+    const fileExtension = await this.getFileExtension(file.name);
     if (!fileExtension) {
       await this.showWarningToast('SCAN.UNSUPPORTED_FILE_TYPE');
       return;
@@ -537,9 +537,16 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
   // Extract text from DOCX (native)
   async extractTextFromDOCX(fileUrl: string): Promise<string> {
     try {
+      const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1) || `docx-${Date.now()}.docx`;
+      const targetPath = `${Directory.Temporary}/${fileName}`;
+      await Filesystem.copy({
+        from: fileUrl,
+        to: fileName,
+        toDirectory: Directory.Temporary
+      });
       const result = await Filesystem.readFile({
-        path: fileUrl,
-        directory: Directory.External
+        path: fileName,
+        directory: Directory.Temporary
       });
       const arrayBuffer = this.base64ToArrayBuffer(result.data as string);
       const mammothResult = await mammoth.extractRawText({ arrayBuffer });
@@ -613,6 +620,37 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  // Get file extension
+  async getFileExtension(fileUrl: string | undefined | null): Promise<string | null> {
+    if (!fileUrl) return null;
+    // Handle content URI by querying the file name or MIME type
+    if (fileUrl.startsWith('content://')) {
+      return await this.getExtensionFromContentUri(fileUrl) || null;
+    }
+    // Handle regular file paths
+    const parts = fileUrl.split('.');
+    return parts.length > 1 ? parts.pop()?.toLowerCase() || null : null;
+  }
+  private async getExtensionFromContentUri(uri: string): Promise<string | null> {
+    try {
+      const response = await fetch(uri);
+      const contentType = response.headers.get('content-type');
+      if (contentType) {
+        const mimeToExt: { [key: string]: string } = {
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+          'application/pdf': 'pdf',
+          'text/plain': 'txt',
+          'application/vnd.oasis.opendocument.text': 'odt',
+        };
+        return mimeToExt[contentType] || null;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting extension from content URI:', error);
+      return null;
+    }
+  }
+
   // Get MIME type
   getMimeType(extension: string): string {
     const mimeTypes: { [key: string]: string } = {
@@ -676,11 +714,6 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
         await this.showWarningToast('SCAN.ERROR_OPENING_FILE');
       }
     }
-  }
-
-  // Get file extension
-  getFileExtension(fileUrl: string | undefined | null): string | null {
-    return fileUrl ? fileUrl.split('.').pop()?.toLowerCase() || null : null;
   }
 
   // Request storage permissions
