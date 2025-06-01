@@ -5,6 +5,7 @@ import { RegulationPatternService } from '../services/regulation-pattern.service
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { FileChooser } from '@awesome-cordova-plugins/file-chooser/ngx';
 import { FileOpener } from '@awesome-cordova-plugins/file-opener/ngx';
+import { FilePath } from '@awesome-cordova-plugins/file-path/ngx';
 import { ZakonyApiService } from '../services/zakony-api.service';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,6 +17,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import { saveAs } from 'file-saver';
 import * as mammoth from 'mammoth';
 import * as JSZip from 'jszip';
+import { MyFileUtils } from 'my-file-utils';
 
 
 interface QuillToolbar {
@@ -43,6 +45,7 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
   
   constructor(
     private fileChooser: FileChooser,
+    private filePath: FilePath,
     private actionSheetCtrl: ActionSheetController,
     private toastController: ToastController,
     private translate: TranslateService,
@@ -623,33 +626,23 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
   // Get file extension
   async getFileExtension(fileUrl: string | undefined | null): Promise<string | null> {
     if (!fileUrl) return null;
-    // Handle content URI by querying the file name or MIME type
     if (fileUrl.startsWith('content://')) {
-      return await this.getExtensionFromContentUri(fileUrl) || null;
+      return await this.getExtensionFromContentUri(fileUrl);
     }
-    // Handle regular file paths
     const parts = fileUrl.split('.');
     return parts.length > 1 ? parts.pop()?.toLowerCase() || null : null;
   }
+
   private async getExtensionFromContentUri(uri: string): Promise<string | null> {
-    try {
-      const response = await fetch(uri);
-      const contentType = response.headers.get('content-type');
-      if (contentType) {
-        const mimeToExt: { [key: string]: string } = {
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
-          'application/pdf': 'pdf',
-          'text/plain': 'txt',
-          'application/vnd.oasis.opendocument.text': 'odt',
-        };
-        return mimeToExt[contentType] || null;
-      }
-      return null;
-    } catch (error) {
-      console.error('Error getting extension from content URI:', error);
-      return null;
-    }
+  try {
+    const result = await MyFileUtils.getFileExtension({ uri });
+    console.log('Extension from custom plugin:', result.extension);
+    return result.extension || null;
+  } catch (error) {
+    console.error('Error getting extension from custom plugin:', JSON.stringify(error));
+    return null;
   }
+}
 
   // Get MIME type
   getMimeType(extension: string): string {

@@ -9,6 +9,9 @@ import { SharedModule } from './shared/shared.module';
 import { RouteReuseStrategy } from '@angular/router';
 import { Storage } from '@ionic/storage-angular';
 import { AppComponent } from './app.component';
+import { FileChooser } from '@awesome-cordova-plugins/file-chooser/ngx';
+import { FileOpener } from '@awesome-cordova-plugins/file-opener/ngx';
+import { FilePath } from '@awesome-cordova-plugins/file-path/ngx';
 
 // Factory function for TranslateLoader
 export function HttpLoaderFactory(http: HttpClient) {
@@ -37,6 +40,9 @@ export function initializeStorage(storage: Storage) {
     })
   ],
   providers: [{ provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
+    FileChooser,
+    FileOpener,
+    FilePath,
     Storage,
     {
       provide: APP_INITIALIZER,

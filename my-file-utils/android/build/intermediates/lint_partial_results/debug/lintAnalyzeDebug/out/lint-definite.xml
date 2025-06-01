@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<incidents format="6" by="lint 8.8.0" type="incidents">
+
+    <incident
+        id="DefaultLocale"
+        severity="warning"
+        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`.">
+        <location
+            file="${:my-file-utils*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/myfileutils/MyFileUtilsPlugin.java"
+            line="52"
+            column="26"
+            startOffset="1761"
+            endLine="52"
+            endColumn="37"
+            endOffset="1772"/>
+    </incident>
+
+    <incident
+        id="OldTargetApi"
+        severity="warning"
+        message="Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the `android.os.Build.VERSION_CODES` javadoc for details.">
+        <fix-replace
+            description="Update targetSdkVersion to 35"
+            oldString="34"
+            replacement="35"
+            priority="0"/>
+        <location
+            file="${:my-file-utils*projectDir}/build.gradle"
+            line="9"
+            column="9"
+            startOffset="160"
+            endLine="9"
+            endColumn="21"
+            endOffset="172"/>
+    </incident>
+
+</incidents>

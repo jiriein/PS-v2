@@ -1,0 +1,19 @@
+<lint-module
+    format="1"
+    dir="D:\PS-v2\my-file-utils\android"
+    name=":my-file-utils"
+    type="LIBRARY"
+    maven="android:my-file-utils:unspecified"
+    agpVersion="8.8.0"
+    buildFolder="build"
+    bootClassPath="C:\Users\jirie\AppData\Local\Android\Sdk\platforms\android-34\android.jar;C:\Users\jirie\AppData\Local\Android\Sdk\build-tools\35.0.0\core-lambda-stubs.jar"
+    javaSourceLevel="17"
+    compileTarget="android-34"
+    neverShrinking="true">
+  <lintOptions
+      abortOnError="true"
+      absolutePaths="true"
+      checkReleaseBuilds="true"
+      explainIssues="true"/>
+  <variant name="release"/>
+</lint-module>
