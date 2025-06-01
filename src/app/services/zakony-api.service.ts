@@ -1,9 +1,11 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { catchError, map } from 'rxjs/operators';
 import { Storage } from '@ionic/storage-angular';
-import { Observable, throwError } from 'rxjs';
+import { Observable, throwError, from } from 'rxjs';
 import { Injectable } from '@angular/core';
 import { tap } from 'rxjs/operators';
+import { Http } from '@capacitor-community/http';
+import { Capacitor } from '@capacitor/core';
 
 
 interface ApiResponse {
@@ -28,9 +30,10 @@ interface ApiResponse {
 })
 
 export class ZakonyApiService {
+  private baseUrl = '';
   //private readonly baseUrl = 'https://www.zakonyprolidi.cz/api/v1/data.json';
-  private readonly baseUrl = '/api/api/v1/data.json'; // Proxy path
-  // API key: test (only few laws are available) or private APIKey with IP filter 
+  //private readonly baseUrl = '/api/api/v1/data.json'; // Proxy path
+  // API key: test (only few laws are available) or private APIKey
 
   constructor(private http: HttpClient, private storage: Storage) {
     this.storage.create();
@@ -53,18 +56,50 @@ export class ZakonyApiService {
   async getDocHead(standardized: string): Promise<Observable<any>> {
     const { collection, document } = this.parseStandardizedText(standardized);
     const apiKey = await this.getApiKey();
-    const url = `${this.baseUrl}/DocHead`;
     const params = {
       apikey: apiKey,
       Collection: collection,
       Document: document,
     };
 
-    return this.http.get<ApiResponse>(url, { params }).pipe(
-      tap(() => {console.log("API DocHead request: " + url, params )}), // Debug log
-      map(response => this.handleResponse(response)),
-      catchError(this.handleError)
-    );
+    if (Capacitor.isNativePlatform()) {
+      // Native platform: Use Capacitor HTTP plugin
+      this.baseUrl = 'https://www.zakonyprolidi.cz/api/v1/data.json';
+      const urlWithParams = `${this.baseUrl}/DocHead?apikey=${encodeURIComponent(apiKey)}&Collection=${encodeURIComponent(collection)}&Document=${encodeURIComponent(document)}`
+      const options = {
+        url: urlWithParams,
+        method: 'GET',
+      };
+      try {
+        console.log('Native API DocHead request options:', options); // Debug log
+        const response = await Http.request(options);
+        console.log('Native API DocHead response:', response); // Debug log
+        if (!response) {
+          throw new Error('Response is null');
+        }
+        if (response.status < 200 || response.status >= 300) {
+          throw new Error(`HTTP error: ${response.status} - ${response.data?.Error?.message || 'Unknown error'}`);
+        }
+        if (!response.data) {
+          throw new Error('No data in response');
+        }
+        const parsedResponse = this.handleResponse(response.data);
+        return from(Promise.resolve(parsedResponse));
+      } catch (error) {
+        console.error('Native API DocHead error:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        return throwError(() => new Error(this.handleNativeError(error)));
+      }
+    } else {
+      // Web platform: Use HttpClient
+      this.baseUrl = '/api/api/v1/data.json'; // Proxy path
+      const url = `${this.baseUrl}/DocHead`;
+      return this.http.get<ApiResponse>(url, { params }).pipe(
+        tap(() => {console.log("API DocHead request: " + url, params )}), // Debug log
+        map(response => this.handleResponse(response)),
+        catchError(this.handleError)
+      );
+    }
   }
 
   /**
@@ -82,11 +117,44 @@ export class ZakonyApiService {
       Document: document,
     };
 
-    return this.http.get<ApiResponse>(url, { params }).pipe(
-      tap(() => {console.log("API DocData request: " + url, params )}), // Debug log
-      map(response => this.handleResponse(response)),
-      catchError(this.handleError)
-    );
+    if (Capacitor.isNativePlatform()) {
+      // Native platform: Use Capacitor HTTP plugin
+      this.baseUrl = 'https://www.zakonyprolidi.cz/api/v1/data.json';
+      const urlWithParams = `${this.baseUrl}/DocData?apikey=${encodeURIComponent(apiKey)}&Collection=${encodeURIComponent(collection)}&Document=${encodeURIComponent(document)}`
+      const options = {
+        url: urlWithParams,
+        method: 'GET',
+      };
+      try {
+        console.log('Native API DocData request options:', options); // Debug log
+        const response = await Http.request(options);
+        console.log('Native API DocData response:', response); // Debug log
+        if (!response) {
+          throw new Error('Response is null');
+        }
+        if (response.status < 200 || response.status >= 300) {
+          throw new Error(`HTTP error: ${response.status} - ${response.data?.Error?.message || 'Unknown error'}`);
+        }
+        if (!response.data) {
+          throw new Error('No data in response');
+        }
+        const parsedResponse = this.handleResponse(response.data);
+        return from(Promise.resolve(parsedResponse));
+      } catch (error) {
+        console.error('Native API DocData error:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        return throwError(() => new Error(this.handleNativeError(error)));
+      }
+    } else {
+      // Web platform: Use HttpClient
+      this.baseUrl = '/api/api/v1/data.json'; // Proxy path
+      const url = `${this.baseUrl}/DocData`;
+      return this.http.get<ApiResponse>(url, { params }).pipe(
+        tap(() => {console.log("API DocData request: " + url, params )}), // Debug log
+        map(response => this.handleResponse(response)),
+        catchError(this.handleError)
+      );
+    }
   }
 
   /**
@@ -143,7 +211,7 @@ export class ZakonyApiService {
   }
 
   /**
-   * Handles HTTP errors.
+   * Handles HTTP errors for HttpClient (web).
    * @param error HttpErrorResponse
    * @returns Observable with error
   */
@@ -166,4 +234,63 @@ export class ZakonyApiService {
     console.error(errorMessage);
     return throwError(() => new Error(errorMessage));
   }
+
+  /**
+   * Handles errors for Capacitor HTTP plugin (native).
+   * @param error Error from Http.request
+   * @returns Error message string
+   */
+  private handleNativeError(error: any): string {
+    let errorMessage = 'An error occurred';
+    if (error.status) {
+      if (error.status === 500) {
+        errorMessage = `Server error: HTTP 500 - Internal Server Error. Wrong API key or the document may not exist.`;
+      } else {
+        errorMessage = `Server error: ${error.status} - ${error.error || 'Unknown error'}`;
+      }
+    } else if (error.message) {
+      errorMessage = `Client error: ${error.message}`;
+    }
+    console.error('Native error:', errorMessage);
+    return errorMessage;
+  }
+
+  async testApiCall(): Promise<Observable<any>> {
+  if (Capacitor.isNativePlatform()) {
+    const url = 'https://www.zakonyprolidi.cz/api/v1/data.json/DocHead?apikey=test&Collection=cs&Document=2006-262';
+    const options = {
+      url: url,
+      method: 'GET',
+    };
+    try {
+      console.log('Native API Test request URL:', url);
+      console.log('Native API Test request options:', options);
+      const response = await Http.request(options);
+      console.log('Native API Test response (full):', JSON.stringify(response, null, 2));
+      if (!response) {
+        throw new Error('Response is null');
+      }
+      if (response.status < 200 || response.status >= 300) {
+        throw new Error(`HTTP error: ${response.status} - ${response.data?.Error?.message || 'Unknown error'}`);
+      }
+      if (!response.data) {
+        throw new Error('No data in response');
+      }
+      return from(Promise.resolve(response.data));
+    } catch (error) {
+      console.error('Native API Test error:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      return throwError(() => new Error(this.handleNativeError(error)));
+    }
+  } else {
+    // Not working because of CORS (API calls above works)
+    const url = 'https://www.zakonyprolidi.cz/api/v1/data.json/DocHead?apikey=test&Collection=cs&Document=2006-262';
+    return this.http.get(url).pipe(
+      tap(response => console.log('API Test request (web):', response)),
+      catchError(this.handleError)
+    );
+  }
+}
+
+
 }

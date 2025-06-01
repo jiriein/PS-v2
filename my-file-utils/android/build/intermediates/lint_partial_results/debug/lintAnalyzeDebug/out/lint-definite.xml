@@ -7,12 +7,12 @@
         message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`.">
         <location
             file="${:my-file-utils*debug*MAIN*sourceProvider*0*javaDir*0}/com/example/myfileutils/MyFileUtilsPlugin.java"
-            line="52"
+            line="81"
             column="26"
-            startOffset="1761"
-            endLine="52"
+            startOffset="2723"
+            endLine="81"
             endColumn="37"
-            endOffset="1772"/>
+            endOffset="2734"/>
     </incident>
 
     <incident

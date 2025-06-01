@@ -25,6 +25,7 @@
     "@awesome-cordova-plugins/file-chooser": "^6.16.0",
     "@awesome-cordova-plugins/file-opener": "^6.16.0",
     "@awesome-cordova-plugins/file-path": "^6.16.0",
+    "@capacitor-community/http": "^1.4.1",
     "@capacitor/android": "^7.0.0",
     "@capacitor/app": "7.0.1",
     "@capacitor/assets": "^3.0.5",

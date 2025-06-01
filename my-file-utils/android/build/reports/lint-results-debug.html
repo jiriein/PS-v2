@@ -179,7 +179,7 @@ document.getElementById(id).style.display = 'none';
     <div class="mdl-layout__header-row">
       <span class="mdl-layout-title">Lint Report: 2 warnings</span>
       <div class="mdl-layout-spacer"></div>
-      <nav class="mdl-navigation mdl-layout--large-screen-only">Check performed at Sun Jun 01 16:42:13 CEST 2025 by AGP (8.8.0)</nav>
+      <nav class="mdl-navigation mdl-layout--large-screen-only">Check performed at Sun Jun 01 20:01:24 CEST 2025 by AGP (8.8.0)</nav>
     </div>
   </header>
   <div class="mdl-layout__drawer">
@@ -229,14 +229,14 @@ Dismiss</button>            </div>
               <div class="mdl-card__supporting-text">
 <div class="issue">
 <div class="warningslist">
-<span class="location"><a href="../../src/main/java/com/example/myfileutils/MyFileUtilsPlugin.java">../../src/main/java/com/example/myfileutils/MyFileUtilsPlugin.java</a>:52</span>: <span class="message">Implicitly using the default locale is a common source of bugs: Use <code>toLowerCase(Locale)</code> instead. For strings meant to be internal use <code>Locale.ROOT</code>, otherwise <code>Locale.getDefault()</code>.</span><br /><pre class="errorlines">
-<span class="lineno"> 49 </span>    }
-<span class="lineno"> 50 </span>
-<span class="lineno"> 51 </span>    <span class="keyword">private</span> String getExtensionFromMimeType(String mimeType) {
-<span class="caretline"><span class="lineno"> 52 </span>        <span class="keyword">switch</span> (mimeType.<span class="warning">toLowerCase</span>()) {&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-<span class="lineno"> 53 </span>            <span class="keyword">case</span> <span class="string">"application/pdf"</span>: <span class="keyword">return</span> <span class="string">"pdf"</span>;
-<span class="lineno"> 54 </span>            <span class="keyword">case</span> <span class="string">"image/jpeg"</span>: <span class="keyword">return</span> <span class="string">"jpg"</span>;
-<span class="lineno"> 55 </span>            <span class="keyword">case</span> <span class="string">"image/png"</span>: <span class="keyword">return</span> <span class="string">"png"</span>;
+<span class="location"><a href="../../src/main/java/com/example/myfileutils/MyFileUtilsPlugin.java">../../src/main/java/com/example/myfileutils/MyFileUtilsPlugin.java</a>:81</span>: <span class="message">Implicitly using the default locale is a common source of bugs: Use <code>toLowerCase(Locale)</code> instead. For strings meant to be internal use <code>Locale.ROOT</code>, otherwise <code>Locale.getDefault()</code>.</span><br /><pre class="errorlines">
+<span class="lineno"> 78 </span>    }
+<span class="lineno"> 79 </span>
+<span class="lineno"> 80 </span>    <span class="keyword">private</span> String getExtensionFromMimeType(String mimeType) {
+<span class="caretline"><span class="lineno"> 81 </span>        <span class="keyword">switch</span> (mimeType.<span class="warning">toLowerCase</span>()) {&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<span class="lineno"> 82 </span>            <span class="keyword">case</span> <span class="string">"application/pdf"</span>: <span class="keyword">return</span> <span class="string">"pdf"</span>;
+<span class="lineno"> 83 </span>            <span class="keyword">case</span> <span class="string">"image/jpeg"</span>: <span class="keyword">return</span> <span class="string">"jpg"</span>;
+<span class="lineno"> 84 </span>            <span class="keyword">case</span> <span class="string">"image/png"</span>: <span class="keyword">return</span> <span class="string">"png"</span>;
 </pre>
 
 </div>

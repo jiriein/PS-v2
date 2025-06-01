@@ -23,6 +23,16 @@ allprojects {
         mavenCentral()
         maven { url "https://jitpack.io" }
     }
+    tasks.withType(Test) {
+        if (name.contains('capacitor-community-http')) {
+            onlyIf { false }
+        }
+    }
+    tasks.withType(Test) {
+        if (project.name == 'capacitor-community-http') {
+            enabled = false
+        }
+    }
 }
 
 task clean(type: Delete) {

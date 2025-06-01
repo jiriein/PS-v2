@@ -1,4 +1,4 @@
-D:\PS-v2\my-file-utils\android\src\main\java\com\example\myfileutils\MyFileUtilsPlugin.java:52: Warning: Implicitly using the default locale is a common source of bugs: Use toLowerCase(Locale) instead. For strings meant to be internal use Locale.ROOT, otherwise Locale.getDefault(). [DefaultLocale]
+D:\PS-v2\my-file-utils\android\src\main\java\com\example\myfileutils\MyFileUtilsPlugin.java:81: Warning: Implicitly using the default locale is a common source of bugs: Use toLowerCase(Locale) instead. For strings meant to be internal use Locale.ROOT, otherwise Locale.getDefault(). [DefaultLocale]
         switch (mimeType.toLowerCase()) {
                          ~~~~~~~~~~~
 

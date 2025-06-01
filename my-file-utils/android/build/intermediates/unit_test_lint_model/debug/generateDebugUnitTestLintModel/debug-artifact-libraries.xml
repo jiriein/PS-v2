@@ -1,9 +1,9 @@
 <libraries>
   <library
       name=":@@:my-file-utils::debug"
-      jars="C:\Users\jirie\.gradle\caches\8.11.1\transforms\b4a3afb67ddc991982ab4953ccea7a6e\transformed\out\jars\classes.jar;C:\Users\jirie\.gradle\caches\8.11.1\transforms\b4a3afb67ddc991982ab4953ccea7a6e\transformed\out\jars\libs\R.jar"
+      jars="C:\Users\jirie\.gradle\caches\8.11.1\transforms\05d184b6d87c2ca4d72c8ed10f2faba3\transformed\out\jars\classes.jar;C:\Users\jirie\.gradle\caches\8.11.1\transforms\05d184b6d87c2ca4d72c8ed10f2faba3\transformed\out\jars\libs\R.jar"
       resolved="android:my-file-utils:unspecified"
-      folder="C:\Users\jirie\.gradle\caches\8.11.1\transforms\b4a3afb67ddc991982ab4953ccea7a6e\transformed\out"
+      folder="C:\Users\jirie\.gradle\caches\8.11.1\transforms\05d184b6d87c2ca4d72c8ed10f2faba3\transformed\out"
       manifest="AndroidManifest.xml"
       resFolder="res"
       assetsFolder="assets"
