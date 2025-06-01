@@ -509,11 +509,21 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
   // Extract text from TXT (native)
   async extractTextFromTXT(fileUrl: string): Promise<string> {
     try {
+      const resolvedPath = await this.filePath.resolveNativePath(fileUrl);
+      console.log('Resolved file path:', resolvedPath);
+      const fileName = resolvedPath.substring(resolvedPath.lastIndexOf('/') + 1) || `txt-${Date.now()}.txt`;
+      const targetPath = `${Directory.Temporary}/${fileName}`;
+      await Filesystem.copy({
+        from: resolvedPath,
+        to: fileName,
+        toDirectory: Directory.Temporary
+      });
       const result = await Filesystem.readFile({
-        path: fileUrl,
-        directory: Directory.External,
+        path: fileName,
+        directory: Directory.Temporary,
         encoding: Encoding.UTF8
       });
+      console.log('Text extracted from TXT:', result.data);
       return result.data as string;
     } catch (error) {
       console.error('Failed to extract text from TXT:', error);

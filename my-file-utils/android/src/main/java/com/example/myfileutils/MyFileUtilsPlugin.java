@@ -7,7 +7,9 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import android.content.ContentResolver;
 import android.net.Uri;
+import java.io.BufferedReader;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 
 @CapacitorPlugin(name = "MyFileUtils")
 public class MyFileUtilsPlugin extends Plugin {
@@ -29,13 +31,11 @@ public class MyFileUtilsPlugin extends Plugin {
             if (mimeType != null) {
                 extension = getExtensionFromMimeType(mimeType);
             } else {
-                try (InputStream ignored = resolver.openInputStream(uri)) {
-                    String fileName = uri.getLastPathSegment();
-                    if (fileName != null) {
-                        int dotIndex = fileName.lastIndexOf('.');
-                        if (dotIndex != -1) {
-                            extension = fileName.substring(dotIndex + 1);
-                        }
+                String fileName = uri.getLastPathSegment();
+                if (fileName != null) {
+                    int dotIndex = fileName.lastIndexOf('.');
+                    if (dotIndex != -1) {
+                        extension = fileName.substring(dotIndex + 1);
                     }
                 }
             }
@@ -45,6 +45,35 @@ public class MyFileUtilsPlugin extends Plugin {
             call.resolve(ret);
         } catch (Exception e) {
             call.reject("Error getting file extension: " + e.getMessage());
+        }
+    }
+
+    @PluginMethod
+    public void readFileContent(PluginCall call) {
+        String uriString = call.getString("uri");
+        if (uriString == null) {
+            call.reject("URI not provided");
+            return;
+        }
+
+        try {
+            Uri uri = Uri.parse(uriString);
+            ContentResolver resolver = getContext().getContentResolver();
+            StringBuilder content = new StringBuilder();
+
+            try (InputStream inputStream = resolver.openInputStream(uri);
+                 BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    content.append(line).append("\n");
+                }
+            }
+
+            JSObject ret = new JSObject();
+            ret.put("content", content.toString());
+            call.resolve(ret);
+        } catch (Exception e) {
+            call.reject("Failed to read file content: " + e.getMessage());
         }
     }
 
