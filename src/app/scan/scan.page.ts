@@ -71,8 +71,8 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
         [{ 'background': [] }],
         ['link'],
         ['clean'],
-        [{ 'header': [1, 2, 3, false] }], // Optional: Add headers
-        ['toggle-highlight'] // Custom button for toggle
+        [{ 'header': [1, 2, 3, false] }],
+        [{ 'toggle-highlight': 'toggle-highlight' }]
       ];
       this.quillEditor = new Quill(this.editorElement.nativeElement, {
         theme: 'snow',
@@ -105,7 +105,6 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
           .map(op => op.insert)
           .join('')
           .trim();
-          this.updateHighlights();
       });
       console.log('Quill editor initialized:', this.quillEditor); // Debug log
     } else {
@@ -145,7 +144,6 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
         this.setEditorContent(text);
       }
     }
-    this.updateHighlights();
     this.cdr.detectChanges();
   }
 
@@ -830,7 +828,6 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
       console.warn('Cannot highlight: Quill editor, matches, or API results not available');
       return;
     }
-
     // Clear existing highlights
     this.quillEditor.formatText(0, this.recognizedText?.length || 0, { background: false, link: null });
 
@@ -842,16 +839,23 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
         const parsed = this.zakonyApiService.parseStandardizedText(match.standardized);
         const { collection, document } = parsed;
         if (document) {
-          const numberMatch = match.text.match(/(\d{1,4}\/\d{2,4})/);
-          const numberText = numberMatch ? numberMatch[0] : match.text;
-          const startOffset = match.text.indexOf(numberText);
-          const endOffset = startOffset + numberText.length;
-          const adjustedStart = match.start + startOffset;
-          const adjustedEnd = match.start + endOffset;
-          this.quillEditor!.formatText(adjustedStart, adjustedEnd - adjustedStart, {
-            background: highlightColor,
-            link: this.highlightMode === 'full' ? `/document-detail/${collection}/${document}` : null
-          });
+          let start: number = match.start;
+          let length: number = match.end - match.start;
+
+          // Only adjust the highlight range to the number part if in 'number' mode
+          if (this.highlightMode === 'number') {
+            const numberMatch = match.text.match(/(\d{1,4}\/\d{2,4})/);
+            const numberText = numberMatch ? numberMatch[0] : match.text;
+            const startOffset = match.text.indexOf(numberText);
+            const endOffset = startOffset + numberText.length;
+            start = match.start + startOffset;
+            length = endOffset - startOffset;
+          }
+          this.quillEditor!.formatText(
+            start,
+            length,
+            { background: highlightColor, link: document ? `/document-detail/${collection}/${document}` : null }
+          );
         }
       }
     });
@@ -860,6 +864,14 @@ export class ScanPage implements OnInit, OnDestroy, AfterViewInit {
   private toggleHighlightMode() {
     this.highlightMode = this.highlightMode === 'full' ? 'number' : 'full';
     console.log('Highlight mode switched to:', this.highlightMode);
+    const toggleButton = document.querySelector('.ql-toggle-highlight');
+    if (toggleButton) {
+      if (this.highlightMode === 'number') {
+        toggleButton.classList.add('ql-active');
+      } else {
+        toggleButton.classList.remove('ql-active');
+      }
+    }
     this.updateHighlights();
   }
   

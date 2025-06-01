@@ -84,7 +84,7 @@
     <!-- Display Matches as Clickable Links -->
     <ion-list class="ion-padding-top-bottom" *ngIf="matches && matches.length > 0">
       <ion-item *ngFor="let match of matches" (click)="navigateToDetail(match)" class="custom-link">
-        <ion-label>
+        <ion-label class="rp-list">
           <h2>{{ match.text }}</h2>
         </ion-label>
       </ion-item>
